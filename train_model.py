@@ -4,18 +4,21 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 import joblib
 
-# Sample synthetic data
-np.random.seed(42)
-data = pd.DataFrame({
-    "Heart Rate": np.random.normal(70, 10, 500),
-    "SpO2": np.random.normal(98, 1, 500),
-    "Temperature": np.random.normal(36.5, 0.5, 500),
-})
+# Sample data
+data = {
+    "heart_rate": [72, 75, 71, 69, 180, 65, 85, 77, 66, 160],
+    "spO2": [98, 97, 99, 96, 90, 99, 97, 95, 98, 88],
+    "temperature": [36.7, 36.8, 37.0, 36.5, 39.2, 36.9, 37.1, 36.6, 36.8, 38.5]
+}
 
-# Train model
-model = IsolationForest(contamination=0.05, random_state=42)
-model.fit(data)
+df = pd.DataFrame(data)
+
+# Train Isolation Forest
+X = df[["heart_rate", "spO2", "temperature"]]
+model = IsolationForest(contamination=0.2, random_state=42)
+model.fit(X)
 
 # Save model
 joblib.dump(model, "anomaly_model.pkl")
-print("✅ Model saved as anomaly_model.pkl")
+
+print("✅ Model retrained and saved using scikit-learn 1.4.2")
