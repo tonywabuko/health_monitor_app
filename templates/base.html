@@ -6,9 +6,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Health Monitor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Modern Health Monitoring Styles */
+        .vitals-container {
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin: 2rem auto;
+            max-width: 900px;
+        }
+        
+        .vitals-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .vitals-header h2 {
+            color: #2b5876;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .vitals-header p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .vitals-form {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        
+        .vital-input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .vital-input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .vital-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .vital-input:focus {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+            outline: none;
+        }
+        
+        .submit-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
+        }
+        
+        .results-container {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .vitals-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -20,10 +109,8 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="#" class="nav-link active" data-page="introduction"><i class="fas fa-user"></i>
-                            Profile</a></li>
-                    <li><a href="#" class="nav-link" data-page="monitor"><i class="fas fa-heartbeat"></i> Monitor</a>
-                    </li>
+                    <li><a href="#" class="nav-link active" data-page="introduction"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="#" class="nav-link" data-page="monitor"><i class="fas fa-heartbeat"></i> Monitor</a></li>
                 </ul>
             </nav>
             <div class="emergency-contact">
@@ -35,7 +122,49 @@
 
         <div class="main-content">
             <img src="data:image/jpg;base64,{banner}" class="app-banner">
-            <!-- Streamlit content will be injected here -->
+            
+            <!-- Health Monitoring Section -->
+            <div class="vitals-container" id="monitor-content">
+                <div class="vitals-header">
+                    <h2><i class="fas fa-heartbeat"></i> Health Monitoring</h2>
+                    <p>Enter your current vital signs for AI analysis</p>
+                </div>
+                
+                <form class="vitals-form" id="vitalsForm">
+                    <div class="vital-input-group">
+                        <label for="heartRate"><i class="fas fa-heart"></i> Heart Rate (bpm)</label>
+                        <input type="number" id="heartRate" class="vital-input" min="40" max="200" value="75">
+                    </div>
+                    
+                    <div class="vital-input-group">
+                        <label for="bloodOxygen"><i class="fas fa-lungs"></i> Blood Oxygen (%)</label>
+                        <input type="number" id="bloodOxygen" class="vital-input" min="70" max="100" value="97">
+                    </div>
+                    
+                    <div class="vital-input-group">
+                        <label for="temperature"><i class="fas fa-thermometer-half"></i> Temperature (°C)</label>
+                        <input type="number" id="temperature" class="vital-input" min="35" max="42" step="0.1" value="36.6">
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-chart-line"></i> Analyze Vitals
+                    </button>
+                </form>
+                
+                <div class="results-container" id="resultsDisplay" style="display: none;">
+                    <h3><i class="fas fa-clipboard-check"></i> Analysis Results</h3>
+                    <div id="resultsContent"></div>
+                    
+                    <div class="normal-ranges">
+                        <h4><i class="fas fa-info-circle"></i> Normal Ranges:</h4>
+                        <ul>
+                            <li><strong>Heart Rate:</strong> 60-100 bpm</li>
+                            <li><strong>Blood Oxygen:</strong> 95-100%</li>
+                            <li><strong>Temperature:</strong> 36.2-37.2°C</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -58,6 +187,53 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('vitalsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get input values
+            const heartRate = parseFloat(document.getElementById('heartRate').value);
+            const bloodOxygen = parseFloat(document.getElementById('bloodOxygen').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            
+            // Simple validation
+            if (isNaN(heartRate) || isNaN(bloodOxygen) || isNaN(temperature)) {
+                alert('Please enter valid numbers for all fields');
+                return;
+            }
+            
+            // Display loading state
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Analyzing your vitals...</p>';
+            document.getElementById('resultsDisplay').style.display = 'block';
+            
+            // Simulate analysis delay
+            setTimeout(function() {
+                // Simple analysis logic (replace with actual API call)
+                const isNormal = heartRate >= 60 && heartRate <= 100 &&
+                               bloodOxygen >= 95 &&
+                               temperature >= 36.2 && temperature <= 37.2;
+                
+                if (isNormal) {
+                    resultsContent.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> <strong>Normal Results</strong>
+                            <p>Your vital signs appear to be within healthy ranges.</p>
+                        </div>
+                    `;
+                } else {
+                    resultsContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Abnormal Results</strong>
+                            <p>We've detected unusual readings. Please consult a healthcare professional.</p>
+                        </div>
+                    `;
+                }
+            }, 1500);
+        });
+    </script>
 </body>
 
 </html>
