@@ -1,106 +1,99 @@
 # 🩺 AI-Powered Health Monitoring System
 
-An intelligent, Streamlit-based web application that uses real-time health data (heart rate, oxygen levels, temperature) to detect anomalies and provide personalized recommendations. It also allows users to reach out to doctors for consultation.
+**Live App**: [https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app/](https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app/)
 
-📍 **Live Demo**: [healthmonitorapp.streamlit.app](https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app/)
+## 📌 Overview
 
----
+This project leverages artificial intelligence to monitor users' health using data from wearable devices. It detects anomalies in vital signs like heart rate and blood oxygen levels, provides personalized health insights, and facilitates medical consultations.
 
-## 🚀 Features
+## 🔑 Key Features
 
-- 🔍 **Anomaly Detection**: Uses an Isolation Forest model to flag abnormal health metrics.
-- 📊 **Real-time Visualization**: Interactive charts for health data trends.
-- 📝 **Doctor Contact Form**: Users can reach out to available doctors.
-- 📁 **CSV Logging**: Doctor requests are saved to `doctor_requests.csv` for easy access.
-- 🔁 **Retrains Model on Deployment**: Model training occurs dynamically during app startup.
+- 📊 **Real-time Health Monitoring**: Uses simulated or wearable device data (e.g., heart rate, SpO₂).
+- 🚨 **Anomaly Detection**: Identifies abnormal patterns using a trained Isolation Forest model.
+- 🧠 **Personalized Recommendations**: Advises users based on current health metrics.
+- 📥 **Doctor Contact Form**: Users can contact doctors directly via a built-in form.
+- 📝 **Data Logging**: Saves doctor requests to a CSV file (`doctor_requests.csv`) for follow-up.
 
----
+## ⚙️ Technologies Used
 
-## 🧠 How It Works
+- **Python**
+- **Streamlit** – Web app interface
+- **Pandas, NumPy** – Data manipulation
+- **Scikit-learn** – Anomaly detection model (Isolation Forest)
+- **CSV** – Persistent local storage of user contact requests
+- **GitHub + Streamlit Cloud** – Deployment
 
-1. **Model Training**
-   - On deployment, the app trains an Isolation Forest model using sample health metrics.
-   - The model detects outliers (anomalies) in user-input data.
-
-2. **Health Metric Input**
-   - Users manually enter their vitals: heart rate, SpO2, and temperature.
-
-3. **Anomaly Result**
-   - The app flags whether the input values are within normal range or potentially concerning.
-
-4. **Contact a Doctor**
-   - Users can submit their name, email, and message to consult a doctor.
-   - Submissions are stored in `doctor_requests.csv`.
-
----
-
-## 👨‍⚕️ Contactable Doctors
-
-| Name           | Email                   |
-|----------------|-------------------------|
-| Tony Wabuko    | tonywabuko@gmail.com    |
-| Brian Sangura  | sangura.bren@gmail.com  |
-
----
-
-## 📂 Project Structure
+## 📁 Project Structure
 
 health_monitor_app/
 │
-├── app.py # Streamlit app interface
-├── model.py # Isolation Forest training logic
-├── health_data.py # Simulated health data generator
-├── doctor_requests.csv # Stores doctor contact form submissions
-├── requirements.txt # Python package dependencies
-├── .gitignore # Git ignored files
-└── README.md # Project documentation
+├── app.py # Main Streamlit app
+├── model.py # ML model training (runs once on deployment)
+├── healthdata.py # Simulated health data generator
+├── doctor_requests.csv # Stores doctor consultation requests
+├── requirements.txt # App dependencies
+├── README.md # Project documentation
+└── pycache/ # Python cache files (ignored)
 
-yaml
+markdown
 Copy
 Edit
 
----
+## 🧪 How It Works
 
-## ✅ Setup Instructions
+1. **User opens the app** → Inputs health data (simulated or real).
+2. **Model processes input** → Detects anomalies using Isolation Forest.
+3. **Output displayed** → Shows health status and recommendations.
+4. **User fills contact form (optional)** → Stored in `doctor_requests.csv`.
 
-To run locally:
+## 👨‍⚕️ Doctor Contact Info
 
-```bash
-# Clone the repository
-git clone https://github.com/tonywabuko/health_monitor_app.git
-cd health_monitor_app
+Users can reach out to the doctors below directly from the app:
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+- **Tony Wabuko** – [tonywabuko@gmail.com](mailto:tonywabuko@gmail.com)
+- **Brian Sangura** – [sangura.bren@gmail.com](mailto:sangura.bren@gmail.com)
 
-# Install dependencies
+## 🧑‍💻 Contributors
+
+- **Tony Wabuko** – AI Lead, Developer  
+- **Brian Sangura** – Data Scientist  Developer
+- **John Kuria** – Developer Frontend Integration & QA
+
+## 🚀 Setup Instructions (Local)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tonywabuko/health_monitor_app.git
+   cd health_monitor_app
+Install dependencies
+
+bash
+Copy
+Edit
 pip install -r requirements.txt
+Run the app
 
-# Run the app
-streamlit run app.py
-⚠️ Notes
-The app uses mock data for demonstration purposes.
-
-You may customize the data or connect with real-time IoT devices.
-
-Anomaly model is retrained on every deployment to avoid serialization issues with cloud environments.
-
-📃 License
-This project is open-source under the MIT License.
-
-🙌 Contributors
-Tony Wabuko – tonywabuko@gmail.com 
-
-Brian Sangura – sangura.bren@gmail.com
-
-John Kuria - kuria4115@gmail.com
-
-Feel free to contribute, give feedback, or fork the project!
-
-yaml
+bash
 Copy
 Edit
+streamlit run app.py
+⚠️ Make sure doctor_requests.csv exists in the root folder. If not, create it manually with headers: Name,Email,Message.
 
----
+📈 Model Retraining
+The anomaly detection model is retrained automatically upon deployment using model.py. This avoids pickle incompatibility issues.
 
+🧩 Future Improvements
+Integration with real wearable APIs (e.g., Fitbit, Garmin)
+
+Authentication and user profiles
+
+Cloud database for persistent storage
+
+SMS/Email alerts to doctors
+
+✅ Project Status
+🟢 Live and functional
+Last updated: July 2025
+Deployed on Streamlit Cloud
+
+This project was built as part of the AI for Software Engineering course and demonstrates a real-world AI application for public health.
