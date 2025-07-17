@@ -1,37 +1,50 @@
-/* Modern UI Styles */
+/* Modern UI Theme */
 .stApp {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     font-family: 'Arial', sans-serif;
 }
 
-/* Metric Cards */
-.metric-card {
-    background: rgba(255, 255, 255, 0.9);
+/* Vital Cards */
+.metric-container {
+    background: white;
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
+    margin: 10px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* Animated Alerts */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
+.metric-title {
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 5px;
 }
 
-.alert-banner {
-    animation: pulse 2s infinite;
-    padding: 15px 20px;
-    border-radius: 10px;
-    margin: 15px 0;
+.metric-value {
+    font-size: 1.8rem;
     font-weight: bold;
+}
+
+/* Status Indicators */
+.vital-normal { color: #28a745; }
+.vital-warning { color: #ffc107; }
+.vital-danger { color: #dc3545; }
+
+/* Alerts */
+.stAlert {
+    border-radius: 10px !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
+}
+
+/* Form Styling */
+.stTextInput>div>div>input, 
+.stTextArea>div>div>textarea {
+    border-radius: 8px !important;
+    padding: 10px !important;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .metric-card {
+    .metric-container {
         padding: 15px;
     }
 }
