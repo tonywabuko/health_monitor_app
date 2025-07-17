@@ -15,30 +15,36 @@
             display: block;
         }
         
-        /* Logo sizing */
+        /* Logo Container */
         .logo-container img {
-            width: 60px;
+            width: 60px;  /* Optimal logo size */
             height: 60px;
             object-fit: contain;
+            transition: transform 0.3s ease;
         }
         
-        /* Banner sizing */
-        .app-banner {
-            width: 100%;
-            max-height: 180px;
-            object-fit: cover;
-            object-position: center;
-            margin-bottom: 2rem;
+        .logo-container img:hover {
+            transform: scale(1.05);
         }
         
-        /* Responsive image container */
-        .image-container {
+        /* Banner Styling */
+        .banner-container {
             width: 100%;
+            max-height: 200px;
             overflow: hidden;
             border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
-        /* Modern Health Monitoring Styles */
+        .banner-container img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            object-position: center;
+        }
+        
+        /* Content Styles */
         .vitals-container {
             padding: 1.5rem;
             background: white;
@@ -48,15 +54,13 @@
             max-width: 900px;
         }
         
-        /* ... (keep all your existing styles) ... */
-
-        /* Lazy loading for better performance */
-        img[data-src] {
+        /* Lazy Loading */
+        .lazy-load {
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.4s ease;
         }
         
-        img.lazy-loaded {
+        .lazy-load.loaded {
             opacity: 1;
         }
     </style>
@@ -64,73 +68,79 @@
 
 <body>
     <div class="app-container">
+        <!-- Sidebar -->
         <div class="sidebar">
             <div class="logo-container">
-                <!-- Optimized logo with explicit dimensions -->
-                <img src="data:image/png;base64,{logo}" 
+                <!-- Optimized Logo -->
+                <img src="assets/images/logo.png" 
                      alt="AI Health Monitor Logo"
-                     width="60" 
+                     width="60"
                      height="60"
-                     loading="lazy">
+                     loading="lazy"
+                     class="lazy-load"
+                     onload="this.classList.add('loaded')">
                 <h2>AI Health Monitor</h2>
             </div>
-            <!-- ... (rest of sidebar) ... -->
+            
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-link active"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-heartbeat"></i> Monitor</a></li>
+                </ul>
+            </nav>
         </div>
 
+        <!-- Main Content -->
         <div class="main-content">
-            <!-- Optimized banner with lazy loading -->
-            <div class="image-container">
-                <img src="data:image/jpg;base64,{banner}" 
-                     alt="Health Monitoring Banner"
-                     class="app-banner"
+            <!-- Optimized Banner -->
+            <div class="banner-container">
+                <img src="assets/images/banner.jpg"
+                     alt="Health Monitoring Dashboard"
                      width="1200"
-                     height="180"
-                     loading="lazy">
+                     height="200"
+                     loading="lazy"
+                     class="lazy-load"
+                     onload="this.classList.add('loaded')">
             </div>
             
             <!-- Health Monitoring Section -->
-            <div class="vitals-container" id="monitor-content">
-                <!-- ... (rest of your content) ... -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Emergency Modal -->
-    <div id="emergency-modal" class="modal">
-        <div class="modal-content">
-            <!-- Optimized close button icon -->
-            <span class="close-btn"><i class="fas fa-times"></i></span>
-            <h2><i class="fas fa-exclamation-triangle"></i> Emergency Assistance</h2>
-            <div class="emergency-info">
-                <!-- ... (rest of modal content) ... -->
+            <div class="vitals-container">
+                <h2><i class="fas fa-heartbeat"></i> Health Monitoring</h2>
+                
+                <form id="vitalsForm">
+                    <!-- Form inputs remain the same -->
+                    <!-- ... -->
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        // Image lazy loading handler
-        document.addEventListener("DOMContentLoaded", function() {
-            const lazyImages = [].slice.call(document.querySelectorAll("img[data-src]"));
+        // Progressive image loading enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyImages = document.querySelectorAll('.lazy-load');
             
-            if ("IntersectionObserver" in window) {
-                let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
-                    entries.forEach(function(entry) {
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
                         if (entry.isIntersecting) {
-                            let lazyImage = entry.target;
-                            lazyImage.src = lazyImage.dataset.src;
-                            lazyImage.classList.add("lazy-loaded");
-                            lazyImageObserver.unobserve(lazyImage);
+                            const img = entry.target;
+                            img.src = img.src; // Triggers load if src wasn't set
+                            imageObserver.unobserve(img);
                         }
                     });
                 });
 
-                lazyImages.forEach(function(lazyImage) {
-                    lazyImageObserver.observe(lazyImage);
+                lazyImages.forEach((img) => {
+                    imageObserver.observe(img);
+                });
+            } else {
+                // Fallback for older browsers
+                lazyImages.forEach((img) => {
+                    img.src = img.dataset.src;
                 });
             }
         });
-
-        // ... (rest of your existing JavaScript) ...
     </script>
 </body>
 
