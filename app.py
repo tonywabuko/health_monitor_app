@@ -85,7 +85,7 @@ st.markdown("Monitor your vital signs in real-time and get personalized health i
 st.header("📊 Health Metrics")
 cols = st.columns(3)
 with cols[0]:
-    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75)
+    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=80)
 with cols[1]:
     spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97)
 with cols[2]:
@@ -118,7 +118,7 @@ with st.expander("View Doctors", expanded=True):
         <div class="doctor-card">
             <h4>Dr. Tony Wabuko</h4>
             <p><i class="fas fa-envelope"></i> tonywabuko@gmail.com</p>
-            <p><i class="fas fa-phone"></i> +254 700 000000</p>
+            <p><i class="fas fa-phone"></i> +254 799104517</p>
             <p><i class="fas fa-stethoscope"></i> Cardiology Specialist</p>
         </div>
         """, unsafe_allow_html=True)
@@ -128,7 +128,7 @@ with st.expander("View Doctors", expanded=True):
         <div class="doctor-card">
             <h4>Dr. Brian Sangura</h4>
             <p><i class="fas fa-envelope"></i> sangura.bren@gmail.com</p>
-            <p><i class="fas fa-phone"></i> +254 700 000001</p>
+            <p><i class="fas fa-phone"></i> +254 720638389</p>
             <p><i class="fas fa-user-md"></i> General Practitioner</p>
         </div>
         """, unsafe_allow_html=True)
@@ -163,4 +163,4 @@ with st.form("doctor_form"):
 
 # Footer
 st.markdown("---")
-st.markdown("AI Health Monitor © 2023 | Version 1.0")
+st.markdown("AI Health Monitor © 2025 | Version 1.0")
