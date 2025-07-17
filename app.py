@@ -6,14 +6,6 @@ import os
 import random  # For generating sample data
 
 
-# Initialize the app
-load_css()
-st.set_page_config(
-    page_title="AI Health Monitor",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # GitHub CSV URL (raw file link)
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
