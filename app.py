@@ -2,6 +2,33 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from model import train_model
+import os
+
+# ===== 1. Modern UI Theme =====
+def load_css():
+    """Load the CSS styles from the assets directory"""
+    css_path = os.path.join(os.path.dirname(__file__), 'assets', 'styles', 'main.css')
+    try:
+        with open(css_path) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning("CSS file not found. Using default styles.")
+        # Fallback minimal styles
+        st.markdown("""
+        <style>
+            .stApp { font-family: Arial, sans-serif; }
+            .metric-card { padding: 10px; border-radius: 10px; }
+        </style>
+        """, unsafe_allow_html=True)
+
+# Initialize the app
+load_css()
+st.set_page_config(
+    page_title="AI Health Monitor",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # GitHub CSV URL (raw file link)
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
