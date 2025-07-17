@@ -13,7 +13,7 @@ st.markdown("Monitor your vital signs in real-time and get personalized health i
 
 # User input
 st.header("📊 Enter Health Metrics")
-heart_rate = st.number_input("Heart Rate (bpm)", min_value=30, max_value=200, value=75)
+heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75)
 spO2 = st.number_input("Blood Oxygen Level (%)", min_value=70, max_value=100, value=97)
 temperature = st.number_input("Body Temperature (°C)", min_value=30.0, max_value=42.0, value=36.8)
 
@@ -25,9 +25,23 @@ data = pd.DataFrame([[heart_rate, spO2, temperature]], columns=["heart_rate", "s
 prediction = model.predict(data)[0]
 
 if prediction == -1:
-    st.error("⚠️ Anomaly Detected! Please consult a doctor.")
+    st.error(f"""
+    ⚠️ Anomaly Detected! Please consult a doctor.
+    
+    Normal ranges:
+    - Heart rate: 60-100 bpm (yours: {heart_rate})
+    - SpO2: 95-100% (yours: {spO2})
+    - Temperature: 36.2-37.2°C (yours: {temperature})
+    """)
 else:
-    st.success("✅ All vitals appear normal.")
+    st.success(f"""
+    ✅ All vitals appear normal.
+    
+    Your readings:
+    - Heart rate: {heart_rate} bpm (normal: 60-100)
+    - SpO2: {spO2}% (normal: 95-100)
+    - Temperature: {temperature}°C (normal: 36.2-37.2)
+    """)
 
 # Doctor contact form
 st.header("📞 Reach Out to a Doctor")
