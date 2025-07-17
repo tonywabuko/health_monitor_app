@@ -7,9 +7,9 @@ from datetime import datetime
 # Constants
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
 NORMAL_RANGES = {
-    "heart_rate": (60, 100),
-    "spO2": (95, 100),
-    "temperature": (36.2, 37.2)
+    "heart_rate": (60, 100),      # 60-100 bpm
+    "spO2": (95, 100),            # 95-100%
+    "temperature": (36.2, 37.2)   # 36.2-37.2°C
 }
 
 # Page Config
@@ -85,31 +85,42 @@ st.markdown("Monitor your vital signs in real-time and get personalized health i
 st.header("📊 Health Metrics")
 cols = st.columns(3)
 with cols[0]:
-    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=80)
+    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75, 
+                               help=f"Normal range: {NORMAL_RANGES['heart_rate'][0]}-{NORMAL_RANGES['heart_rate'][1]} bpm")
 with cols[1]:
-    spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97)
+    spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97,
+                          help=f"Normal range: {NORMAL_RANGES['spO2'][0]}-{NORMAL_RANGES['spO2'][1]}%")
 with cols[2]:
-    temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=42.0, value=36.8)
+    temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=42.0, value=36.8, step=0.1,
+                                help=f"Normal range: {NORMAL_RANGES['temperature'][0]}-{NORMAL_RANGES['temperature'][1]}°C")
 
-# Analysis
-try:
-    model = train_model()
-    data = pd.DataFrame([[heart_rate, spO2, temperature]], 
-                       columns=["heart_rate", "spO2", "temperature"])
-    prediction = model.predict(data)[0]
+# Analysis with explicit range checking
+hr_normal = NORMAL_RANGES["heart_rate"][0] <= heart_rate <= NORMAL_RANGES["heart_rate"][1]
+spo2_normal = NORMAL_RANGES["spO2"][0] <= spO2 <= NORMAL_RANGES["spO2"][1]
+temp_normal = NORMAL_RANGES["temperature"][0] <= temperature <= NORMAL_RANGES["temperature"][1]
+
+is_anomaly = not (hr_normal and spo2_normal and temp_normal)
+
+if is_anomaly:
+    st.error("""
+    ⚠️ Anomaly Detected! Please consult a doctor.
     
-    is_anomaly = prediction == -1
-    if is_anomaly:
-        st.error("⚠️ Anomaly Detected! Please consult a doctor.")
-    else:
-        st.success("✅ All vitals appear normal.")
-except:
-    st.warning("⚠️ Model analysis unavailable - showing basic range checks")
-    is_anomaly = not (NORMAL_RANGES["heart_rate"][0] <= heart_rate <= NORMAL_RANGES["heart_rate"][1] and
-                     spO2 >= NORMAL_RANGES["spO2"][0] and
-                     NORMAL_RANGES["temperature"][0] <= temperature <= NORMAL_RANGES["temperature"][1])
+    ### Abnormal Values:
+    """ + 
+    (f"- ❌ Heart Rate: {heart_rate} bpm (Normal: 60-100)\n" if not hr_normal else "") +
+    (f"- ❌ SpO2: {spO2}% (Normal: 95-100)\n" if not spo2_normal else "") +
+    (f"- ❌ Temperature: {temperature}°C (Normal: 36.2-37.2)\n" if not temp_normal else ""))
+else:
+    st.success("""
+    ✅ All vitals appear normal.
+    
+    ### Your Readings:
+    - Heart rate: {heart_rate} bpm (Normal: 60-100)
+    - SpO2: {spO2}% (Normal: 95-100)
+    - Temperature: {temperature}°C (Normal: 36.2-37.2)
+    """.format(heart_rate=heart_rate, spO2=spO2, temperature=temperature))
 
-# Doctors Section
+# Doctors Section with updated specialties
 st.header("👨‍⚕️ Available Doctors")
 with st.expander("View Doctors", expanded=True):
     cols = st.columns(2)
@@ -118,8 +129,8 @@ with st.expander("View Doctors", expanded=True):
         <div class="doctor-card">
             <h4>Dr. Tony Wabuko</h4>
             <p><i class="fas fa-envelope"></i> tonywabuko@gmail.com</p>
-            <p><i class="fas fa-phone"></i> +254 799104517</p>
-            <p><i class="fas fa-stethoscope"></i> Cardiology Specialist</p>
+            <p><i class="fas fa-phone"></i> +254 700 000000</p>
+            <p><i class="fas fa-user-md"></i> General Practitioner</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -128,8 +139,8 @@ with st.expander("View Doctors", expanded=True):
         <div class="doctor-card">
             <h4>Dr. Brian Sangura</h4>
             <p><i class="fas fa-envelope"></i> sangura.bren@gmail.com</p>
-            <p><i class="fas fa-phone"></i> +254 720638389</p>
-            <p><i class="fas fa-user-md"></i> General Practitioner</p>
+            <p><i class="fas fa-phone"></i> +254 700 000001</p>
+            <p><i class="fas fa-procedures"></i> ICU Specialist</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -163,4 +174,4 @@ with st.form("doctor_form"):
 
 # Footer
 st.markdown("---")
-st.markdown("AI Health Monitor © 2025 | Version 1.0")
+st.markdown("AI Health Monitor © 2023 | Version 1.0")
