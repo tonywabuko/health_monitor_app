@@ -173,16 +173,51 @@ def health_monitor_page():
                                    columns=["heart_rate", "spO2", "temperature"])
                 prediction = model.predict(data)[0]
                 
+                # Manual range checks
+                hr_abnormal = heart_rate < 60 or heart_rate > 100
+                spo2_abnormal = spO2 < 95
+                temp_abnormal = temp < 36.2 or temp > 37.2
+                
                 # Results container
                 with st.container():
                     st.markdown("## 📝 Analysis Results")
                     
-                    if prediction == -1:
+                    if prediction == -1 or hr_abnormal or spo2_abnormal or temp_abnormal:
                         st.error("""
                         ⚠️ **Anomaly Detected**  
-                        We've detected unusual readings in your vital signs.  
-                        Please consult a healthcare professional.
+                        We've detected unusual readings in your vital signs:
                         """)
+                        
+                        # Detailed anomaly report
+                        anomaly_details = []
+                        if hr_abnormal:
+                            status = "HIGH" if heart_rate > 100 else "LOW"
+                            anomaly_details.append(f"- ❤️ Heart Rate: {heart_rate} bpm ({status})")
+                        if spo2_abnormal:
+                            anomaly_details.append(f"- 🫁 Blood Oxygen: {spO2}% (LOW)")
+                        if temp_abnormal:
+                            status = "HIGH" if temp > 37.2 else "LOW"
+                            anomaly_details.append(f"- 🌡️ Temperature: {temp}°C ({status})")
+                        
+                        st.markdown("\n".join(anomaly_details))
+                        
+                        st.warning("""
+                        ### Recommended Actions:
+                        - Rest and retake measurements
+                        - Drink water if dehydrated
+                        - Contact a doctor if symptoms persist
+                        """)
+                        
+                        # Show emergency contacts
+                        with st.expander("🆘 Immediate Assistance"):
+                            st.markdown("""
+                            **Available Doctors:**
+                            - Dr. Tony Wabuko: tonywabuko@gmail.com (Cardiologist)
+                            - Dr. Brian Sangura: sangura.bren@gmail.com (General Physician)
+                            
+                            **Emergency Services:**
+                            - 🚑 Call 911 (US) or 112 (EU) for life-threatening conditions
+                            """)
                     else:
                         st.success("""
                         ✅ **Vitals Normal**  
@@ -216,10 +251,11 @@ page = st.sidebar.radio("", list(PAGES.keys()), label_visibility="collapsed")
 # Doctor contact in sidebar
 st.sidebar.markdown(f"""
 <div class="sidebar-card">
-    <h4><img src="data:image/png;base64,{st.session_state.images['doctor_icon']}" width="20"> Contact Doctor</h4>
-    <p>Dr. Tony Wabuko<br>tonywabuko@gmail.com</p>
-    <button class="emergency-btn" onclick="alert('Emergency contact initiated!')">
-        <i class="fas fa-ambulance"></i> Emergency
+    <h4><img src="data:image/png;base64,{st.session_state.images['doctor_icon']}" width="20"> Contact Doctors</h4>
+    <p><strong>Dr. Tony Wabuko</strong><br>tonywabuko@gmail.com<br>(Cardiologist)</p>
+    <p><strong>Dr. Brian Sangura</strong><br>sangura.bren@gmail.com<br>(General Physician)</p>
+    <button class="emergency-btn" onclick="alert('Connecting to emergency services...')">
+        <i class="fas fa-ambulance"></i> Emergency Call
     </button>
 </div>
 """, unsafe_allow_html=True)
