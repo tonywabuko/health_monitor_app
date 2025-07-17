@@ -1,15 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from model import train_model
+from model import load_model
 from datetime import datetime
+import os
 
 # Constants
-CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
+LOCAL_CSV = "doctor_requests.csv"
 NORMAL_RANGES = {
-    "heart_rate": (60, 100),      # 60-100 bpm
-    "spO2": (95, 100),            # 95-100%
-    "temperature": (36.2, 37.2)   # 36.2-37.2°C
+    "heart_rate": (60, 100),
+    "spO2": (95, 100),
+    "temperature": (36.2, 37.2)
 }
 
 # Page Config
@@ -20,10 +21,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Dark Theme
+# Custom CSS
 st.markdown("""
 <style>
-    /* Dark Cards for Doctors */
     .doctor-card {
         background-color: #1e293b !important;
         border-radius: 10px;
@@ -46,8 +46,6 @@ st.markdown("""
         width: 20px;
         text-align: center;
     }
-    
-    /* Dark Form */
     .stForm {
         background-color: #1e293b !important;
         border-radius: 10px;
@@ -65,8 +63,6 @@ st.markdown("""
     .stSelectbox label {
         color: #f8fafc !important;
     }
-    
-    /* General Improvements */
     .metric-card {
         background: #1e293b;
         border-radius: 10px;
@@ -79,48 +75,49 @@ st.markdown("""
 
 # Header
 st.title("🩺 AI-Powered Health Monitoring System")
-st.markdown("Monitor your vital signs in real-time and get personalized health insights.")
+st.markdown("Monitor your vital signs in real-time and get personalized health insights powered by AI.")
 
-# Health Metrics
+# Input: Health Metrics
 st.header("📊 Health Metrics")
 cols = st.columns(3)
 with cols[0]:
-    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75, 
-                               help=f"Normal range: {NORMAL_RANGES['heart_rate'][0]}-{NORMAL_RANGES['heart_rate'][1]} bpm")
+    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75,
+                                 help="Normal range: 60–100 bpm")
 with cols[1]:
     spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97,
-                          help=f"Normal range: {NORMAL_RANGES['spO2'][0]}-{NORMAL_RANGES['spO2'][1]}%")
+                           help="Normal range: 95–100%")
 with cols[2]:
     temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=42.0, value=36.8, step=0.1,
-                                help=f"Normal range: {NORMAL_RANGES['temperature'][0]}-{NORMAL_RANGES['temperature'][1]}°C")
+                                  help="Normal range: 36.2–37.2°C")
 
-# Analysis with explicit range checking
-hr_normal = NORMAL_RANGES["heart_rate"][0] <= heart_rate <= NORMAL_RANGES["heart_rate"][1]
-spo2_normal = NORMAL_RANGES["spO2"][0] <= spO2 <= NORMAL_RANGES["spO2"][1]
-temp_normal = NORMAL_RANGES["temperature"][0] <= temperature <= NORMAL_RANGES["temperature"][1]
+# AI-Based Anomaly Detection
+model = load_model()
+input_df = pd.DataFrame([{
+    "heart_rate": heart_rate,
+    "spO2": spO2,
+    "temperature": temperature
+}])
+prediction = model.predict(input_df)[0]
+is_anomaly = prediction == -1
 
-is_anomaly = not (hr_normal and spo2_normal and temp_normal)
-
+# Output Feedback
 if is_anomaly:
-    st.error("""
-    ⚠️ Anomaly Detected! Please consult a doctor.
-    
-    ### Abnormal Values:
-    """ + 
-    (f"- ❌ Heart Rate: {heart_rate} bpm (Normal: 60-100)\n" if not hr_normal else "") +
-    (f"- ❌ SpO2: {spO2}% (Normal: 95-100)\n" if not spo2_normal else "") +
-    (f"- ❌ Temperature: {temperature}°C (Normal: 36.2-37.2)\n" if not temp_normal else ""))
+    st.error("⚠️ Anomaly Detected by AI Model")
+    st.markdown("""
+    One or more vital signs appear outside the expected pattern based on historical health data.
+    Please consult a medical professional.
+    """)
 else:
-    st.success("""
-    ✅ All vitals appear normal.
-    
-    ### Your Readings:
-    - Heart rate: {heart_rate} bpm (Normal: 60-100)
-    - SpO2: {spO2}% (Normal: 95-100)
-    - Temperature: {temperature}°C (Normal: 36.2-37.2)
-    """.format(heart_rate=heart_rate, spO2=spO2, temperature=temperature))
+    st.success("✅ Your vital signs appear normal based on the AI model.")
 
-# Doctors Section with updated specialties
+st.markdown(f"""
+### 🔎 Your Input:
+- Heart Rate: {heart_rate} bpm
+- Blood Oxygen: {spO2}%
+- Temperature: {temperature}°C
+""")
+
+# Doctors Section
 st.header("👨‍⚕️ Available Doctors")
 with st.expander("View Doctors", expanded=True):
     cols = st.columns(2)
@@ -133,7 +130,6 @@ with st.expander("View Doctors", expanded=True):
             <p><i class="fas fa-user-md"></i> Cardiology Specialist</p>
         </div>
         """, unsafe_allow_html=True)
-    
     with cols[1]:
         st.markdown("""
         <div class="doctor-card">
@@ -145,33 +141,37 @@ with st.expander("View Doctors", expanded=True):
         """, unsafe_allow_html=True)
 
 # Contact Form
+st.header("📩 Contact a Doctor")
 with st.form("doctor_form"):
-    st.subheader("📩 Contact a Doctor")
     name = st.text_input("Your Name")
     email = st.text_input("Your Email")
     message = st.text_area("Your Message")
-    
     submitted = st.form_submit_button("Send Request")
-    if submitted:
-        try:
-            new_entry = pd.DataFrame([{
-                "name": name,
-                "email": email,
-                "message": message,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }])
-            
-            try:
-                existing = pd.read_csv(CSV_URL)
-                updated = pd.concat([existing, new_entry], ignore_index=True)
-            except:
-                updated = new_entry
-            
-            updated.to_csv("doctor_requests.csv", index=False)
-            st.success("✅ Request submitted successfully!")
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
 
-# Footer
+    if submitted:
+        if not name or not email or not message:
+            st.warning("⚠️ Please fill out all fields before submitting.")
+        else:
+            try:
+                new_entry = pd.DataFrame([{
+                    "name": name,
+                    "email": email,
+                    "message": message,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }])
+
+                if os.path.exists(LOCAL_CSV):
+                    existing = pd.read_csv(LOCAL_CSV)
+                    updated = pd.concat([existing, new_entry], ignore_index=True)
+                else:
+                    updated = new_entry
+
+                updated.to_csv(LOCAL_CSV, index=False)
+                st.success("✅ Request submitted successfully!")
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+
+# Privacy & Footer
 st.markdown("---")
 st.markdown("AI Health Monitor © 2025 | Version 1.0")
+st.markdown("<small>🔒 This tool is for educational use only. It does not replace professional medical advice.</small>", unsafe_allow_html=True)
