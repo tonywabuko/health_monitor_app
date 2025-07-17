@@ -3,14 +3,6 @@ import pandas as pd
 import numpy as np
 from model import train_model
 
-# Try to import visualization libraries with fallbacks
-try:
-    import plotly.express as px
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
-    st.sidebar.warning("Plotly not available - using simple charts")
-
 # GitHub CSV URL (raw file link)
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
 
@@ -18,6 +10,11 @@ st.set_page_config(page_title="AI-Powered Health Monitor", layout="centered")
 
 st.title("🩺 AI-Powered Health Monitoring System")
 st.markdown("Monitor your vital signs in real-time and get personalized health insights.")
+
+# Constants for normal ranges
+HR_MIN, HR_MAX = 60, 100
+SPO2_MIN, SPO2_MAX = 95, 100
+TEMP_MIN, TEMP_MAX = 36.2, 37.2
 
 # User input
 st.header("📊 Enter Health Metrics")
@@ -32,14 +29,22 @@ model = train_model()
 data = pd.DataFrame([[heart_rate, spO2, temperature]], columns=["heart_rate", "spO2", "temperature"])
 prediction = model.predict(data)[0]
 
-if prediction == -1:
+# Enhanced detection with manual range checking
+is_hr_abnormal = heart_rate < HR_MIN or heart_rate > HR_MAX
+is_spo2_abnormal = spO2 < SPO2_MIN
+is_temp_abnormal = temperature < TEMP_MIN or temperature > TEMP_MAX
+
+# Combined detection (model prediction OR manual range check)
+is_anomaly = prediction == -1 or is_hr_abnormal or is_spo2_abnormal or is_temp_abnormal
+
+if is_anomaly:
     st.error(f"""
     ⚠️ Anomaly Detected! Please consult a doctor.
     
-    Normal ranges:
-    - Heart rate: 60-100 bpm (yours: {heart_rate})
-    - SpO2: 95-100% (yours: {spO2})
-    - Temperature: 36.2-37.2°C (yours: {temperature})
+    ### Abnormal Values:
+    {"- ❌ Heart Rate: " + str(heart_rate) + " bpm (Normal: 60-100)" if is_hr_abnormal else "- ✅ Heart Rate: Normal"}
+    {"- ❌ SpO2: " + str(spO2) + "% (Normal: ≥95%)" if is_spo2_abnormal else "- ✅ SpO2: Normal"}
+    {"- ❌ Temperature: " + str(temperature) + "°C (Normal: 36.2-37.2)" if is_temp_abnormal else "- ✅ Temperature: Normal"}
     """)
 else:
     st.success(f"""
@@ -51,23 +56,17 @@ else:
     - Temperature: {temperature}°C (normal: 36.2-37.2)
     """)
 
-# Simple historical data visualization (works without Plotly)
+# Simple historical data visualization using Streamlit native
 st.header("📈 Health Trends")
 try:
-    # Sample data - replace with your actual data source
     trend_data = pd.DataFrame({
         'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-        'Heart Rate': [72, 75, 71, 69, 68],
-        'SpO2': [98, 97, 99, 96, 97],
-        'Temperature': [36.7, 36.8, 37.0, 36.5, 36.6]
+        'Heart Rate': [72, 75, 71, 69, heart_rate],
+        'SpO2': [98, 97, 99, 96, spO2],
+        'Temperature': [36.7, 36.8, 37.0, 36.5, temperature]
     })
     
-    if PLOTLY_AVAILABLE:
-        fig = px.line(trend_data, x='Day', y=['Heart Rate', 'SpO2', 'Temperature'],
-                     title='Weekly Health Trends')
-        st.plotly_chart(fig)
-    else:
-        st.line_chart(trend_data.set_index('Day'))
+    st.line_chart(trend_data.set_index('Day'))
 except Exception as e:
     st.warning(f"Couldn't display trends: {str(e)}")
 
@@ -99,3 +98,15 @@ with st.form("doctor_form"):
 st.markdown("### 🧑‍⚕️ Available Doctors")
 st.markdown("- **Tony Wabuko** — [tonywabuko@gmail.com](mailto:tonywabuko@gmail.com)")
 st.markdown("- **Brian Sangura** — [sangura.bren@gmail.com](mailto:sangura.bren@gmail.com)")
+
+# Emergency instructions
+with st.expander("🚨 Emergency Instructions"):
+    st.warning("""
+    If experiencing any of these symptoms:
+    - Chest pain
+    - Severe shortness of breath
+    - Confusion or dizziness
+    - Blue lips or face
+    
+    Call emergency services immediately!
+    """)
