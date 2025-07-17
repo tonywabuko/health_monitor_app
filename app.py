@@ -127,7 +127,7 @@ with st.expander("View Doctors", expanded=True):
     with cols[0]:
         st.markdown("""
         <div class="doctor-card">
-            <h4>Dr. Tony Wabuko</h4>
+            <h4>Dr. Wabuko</h4>
             <p><i class="fas fa-envelope"></i> tonywabuko@gmail.com</p>
             <p><i class="fas fa-phone"></i> +254 799104517</p>
             <p><i class="fas fa-user-md"></i> Cardiology Specialist</p>
@@ -137,7 +137,7 @@ with st.expander("View Doctors", expanded=True):
     with cols[1]:
         st.markdown("""
         <div class="doctor-card">
-            <h4>Dr. Brian Sangura</h4>
+            <h4>Dr. Sangura</h4>
             <p><i class="fas fa-envelope"></i> sangura.bren@gmail.com</p>
             <p><i class="fas fa-phone"></i> +254 720638389</p>
             <p><i class="fas fa-procedures"></i> ICU Specialist</p>
