@@ -4,31 +4,52 @@ import numpy as np
 from model import train_model
 import os
 
-# ===== 1. Modern UI Theme =====
+# ===== CSS Loading =====
 def load_css():
-    """Load the CSS styles from the assets directory"""
-    css_path = os.path.join(os.path.dirname(__file__), 'assets', 'styles', 'main.css')
-    try:
-        with open(css_path) as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.warning("CSS file not found. Using default styles.")
-        # Fallback minimal styles
-        st.markdown("""
-        <style>
-            .stApp { font-family: Arial, sans-serif; }
-            .metric-card { padding: 10px; border-radius: 10px; }
-        </style>
-        """, unsafe_allow_html=True)
+    """Load CSS with multiple fallback methods"""
+    # Try package-relative path first (for deployed apps)
+    css_path = os.path.join(os.path.dirname(__file__), 'assets', 'styles.css')
+    
+    # Method 1: Try loading from file
+    if os.path.exists(css_path):
+        try:
+            with open(css_path, encoding='utf-8') as f:
+                st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+            return
+        except Exception as e:
+            st.warning(f"CSS loading warning: {str(e)}")
+    
+    # Method 2: Embedded minimal CSS fallback
+    st.markdown("""
+    <style>
+        /* Basic UI Enhancements */
+        .stApp {
+            background: #f0f2f6;
+            font-family: Arial, sans-serif;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .vital-normal { color: #28a745; }
+        .vital-warning { color: #ffc107; }
+        .vital-danger { color: #dc3545; }
+        .stAlert { border-radius: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Initialize the app
+# Initialize app
 load_css()
 st.set_page_config(
     page_title="AI Health Monitor",
     page_icon="🏥",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded"
 )
+
+# Rest of your existing app code...
+# [Keep all your current functionality here]
+# [Include the vital signs monitoring, prediction, and doctor contact form]
 
 # GitHub CSV URL (raw file link)
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
