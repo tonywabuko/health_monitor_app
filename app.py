@@ -5,21 +5,6 @@ from model import train_model
 import os
 import random  # For generating sample data
 
-# ===== 1. Modern UI Theme =====
-def load_css():
-    """Load the CSS styles from the assets directory"""
-    css_path = os.path.join(os.path.dirname(__file__), 'assets', 'styles', 'main.css')
-    try:
-        with open(css_path) as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.warning("CSS file not found. Using default styles.")
-        st.markdown("""
-        <style>
-            .stApp { font-family: Arial, sans-serif; }
-            .metric-card { padding: 10px; border-radius: 10px; }
-        </style>
-        """, unsafe_allow_html=True)
 
 # Initialize the app
 load_css()
