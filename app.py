@@ -3,18 +3,6 @@ import pandas as pd
 import numpy as np
 from model import train_model
 
-# ===== 1. Modern UI Theme =====
-st.set_page_config(
-    page_title="AI Health Monitor",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ===== 6. Dynamic Color Themes =====
-with open('assets/styles.css') as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
 # GitHub CSV URL (raw file link)
 CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
 
