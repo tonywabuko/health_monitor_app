@@ -1,32 +1,41 @@
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 import joblib
 import os
-from pathlib import Path
 
-MODEL_PATH = Path(__file__).parent / "health_model.pkl"
+# Define the path where the model will be saved
+MODEL_PATH = "anomaly_detector.pkl"
 
-def train_model():
-    """Train and save the anomaly detection model"""
-    data = {
-        "heart_rate": [72, 75, 71, 69, 180, 65, 85, 77, 66, 160, 62, 110, 58, 130],
-        "spO2": [98, 97, 99, 96, 90, 99, 97, 95, 98, 88, 99, 92, 100, 85],
-        "temperature": [36.7, 36.8, 37.0, 36.5, 39.2, 36.9, 37.1, 36.6, 36.8, 38.5, 36.4, 37.5, 36.3, 38.0]
-    }
+# Simulate training data representing normal health vitals
+def generate_training_data(n=1000):
+    np.random.seed(42)
+    heart_rate = np.random.normal(loc=75, scale=5, size=n)
+    spO2 = np.random.normal(loc=98, scale=1, size=n)
+    temperature = np.random.normal(loc=36.8, scale=0.3, size=n)
 
-    model = Pipeline([
-        ('scaler', StandardScaler()),
-        ('iso_forest', IsolationForest(contamination=0.2, random_state=42))
-    ])
-    
-    trained_model = model.fit(pd.DataFrame(data))
-    joblib.dump(trained_model, MODEL_PATH)
-    return trained_model
+    df = pd.DataFrame({
+        "heart_rate": heart_rate,
+        "spO2": spO2,
+        "temperature": temperature
+    })
 
+    return df
+
+# Train and save the model
+def train_and_save_model():
+    df = generate_training_data()
+    model = IsolationForest(contamination=0.02, random_state=42)
+    model.fit(df)
+    joblib.dump(model, MODEL_PATH)
+    print("✅ Model trained and saved to:", MODEL_PATH)
+
+# Load the model
 def load_model():
-    """Load the trained model or train if not found"""
-    if os.path.exists(MODEL_PATH):
-        return joblib.load(MODEL_PATH)
-    return train_model()
+    if not os.path.exists(MODEL_PATH):
+        train_and_save_model()
+    return joblib.load(MODEL_PATH)
+
+# For standalone testing
+if __name__ == "__main__":
+    train_and_save_model()
