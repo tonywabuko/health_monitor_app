@@ -1,97 +1,67 @@
 import streamlit as st
-import pandas as pd
-import altair as alt
 import numpy as np
-from model import detect_anomalies, load_model
-from health_data import simulate_data
+import joblib
+import pandas as pd
 import os
-from datetime import datetime
 
 # Load the trained model
-model = load_model()
+model = joblib.load("anomaly_model.pkl")
 
-st.set_page_config(page_title="AI Health Monitor", layout="centered")
+# Streamlit app config
+st.set_page_config(
+    page_title="AI-Powered Health Monitoring", layout="centered")
 st.title("🩺 AI-Powered Health Monitoring System")
 
-# Sidebar for data entry
-st.sidebar.header("Input Your Vitals")
-heart_rate = st.sidebar.slider("Heart Rate (bpm)", 40, 180, 72)
-blood_oxygen = st.sidebar.slider("SpO2 (%)", 70, 100, 98)
+st.subheader("Enter Your Vital Signs")
+heart_rate = st.number_input(
+    "Heart Rate (bpm)", min_value=30, max_value=200, value=75)
+spO2 = st.number_input("Oxygen Saturation (%)",
+                       min_value=50, max_value=100, value=98)
+temperature = st.number_input(
+    "Body Temperature (°C)", min_value=30.0, max_value=42.0, value=36.7, step=0.1)
 
-# Simulate or use real-time input
-input_data = pd.DataFrame([{
-    'heart_rate': heart_rate,
-    'blood_oxygen': blood_oxygen
-}])
+# Prediction
+if st.button("Check Health Status"):
+    input_data = np.array([[heart_rate, spO2, temperature]])
+    prediction = model.predict(input_data)
 
-# Anomaly detection
-results = detect_anomalies(input_data, model)
-
-st.subheader("📊 Vitals Overview")
-st.write(results)
-
-# Visualization
-chart = alt.Chart(results.reset_index()).mark_bar().encode(
-    x='index',
-    y='heart_rate',
-    color=alt.condition(
-        alt.datum.anomaly == 'Anomaly',
-        alt.value('red'),
-        alt.value('green')
-    )
-).properties(title="Heart Rate Trend")
-st.altair_chart(chart, use_container_width=True)
-
-# Recommendations
-st.subheader("🧠 Health Recommendation")
-anomaly = results.iloc[0]["anomaly"]
-recommendation = ""
-
-if anomaly == "Anomaly":
-    if heart_rate > 120:
-        recommendation = "High heart rate detected. Seek medical advice."
-    elif heart_rate < 50:
-        recommendation = "Low heart rate detected. Monitor for dizziness or fatigue."
-    elif blood_oxygen < 90:
-        recommendation = "Low oxygen saturation. Use a pulse oximeter or consult a doctor."
+    if prediction[0] == -1:
+        st.error("⚠️ Anomaly Detected! Your health readings may be abnormal.")
     else:
-        recommendation = "Vitals are unusual. Monitor your symptoms closely."
-else:
-    recommendation = "Your vitals are within the normal range. Keep monitoring."
+        st.success("✅ Your vital signs appear to be within normal range.")
 
-st.success(recommendation)
+# Divider
+st.markdown("---")
 
-# Contact a doctor
-st.subheader("📞 Contact a Doctor")
-doctors = {
-    "Tony Wabuko": {"phone": "0799104517", "email": "tonywabuko@gmail.com"},
-    "Brian Sangura": {"phone": "0720638389", "email": "sangura.bren@gmail.com"}
-}
+# Consultation Form
+st.subheader("📞 Request a Doctor Consultation")
+with st.form("consult_form"):
+    name = st.text_input("Full Name")
+    email = st.text_input("Email Address")
+    symptoms = st.text_area("Briefly Describe Your Symptoms")
+    submit = st.form_submit_button("Submit Request")
 
-selected_doc = st.selectbox("Select a doctor", list(doctors.keys()))
-user_name = st.text_input("Your Name")
-user_phone = st.text_input("Your Phone")
-user_msg = st.text_area("Message")
+    if submit:
+        if name and email and symptoms:
+            new_entry = {
+                "Name": name,
+                "Email": email,
+                "Symptoms": symptoms,
+                "Heart Rate": heart_rate,
+                "SpO2": spO2,
+                "Temperature": temperature
+            }
 
-if st.button("Send Request"):
-    if user_name and user_phone and user_msg:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        record = {
-            "Timestamp": timestamp,
-            "Patient Name": user_name,
-            "Patient Phone": user_phone,
-            "Doctor": selected_doc,
-            "Doctor Phone": doctors[selected_doc]["phone"],
-            "Doctor Email": doctors[selected_doc]["email"],
-            "Message": user_msg
-        }
-        df = pd.DataFrame([record])
-        file_path = "doctor_requests.csv"
-        if os.path.exists(file_path):
-            df.to_csv(file_path, mode='a', index=False, header=False)
+            # Save to consultations.csv
+            if os.path.exists("consultations.csv"):
+                df = pd.read_csv("consultations.csv")
+                df = pd.concat([df, pd.DataFrame([new_entry])],
+                               ignore_index=True)
+            else:
+                df = pd.DataFrame([new_entry])
+
+            df.to_csv("consultations.csv", index=False)
+            st.success(
+                "✅ Your request has been submitted. A doctor will reach out to you soon.")
         else:
-            df.to_csv(file_path, index=False)
-        st.success(
-            "✅ Your request was sent to the doctor and logged for follow-up.")
-    else:
-        st.error("❗Please fill in all the fields.")
+            st.warning("⚠️ Please fill in all the fields before submitting.")

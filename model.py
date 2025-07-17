@@ -1,28 +1,25 @@
 import pandas as pd
+import numpy as np
 from sklearn.ensemble import IsolationForest
 import joblib
-import os
 
-MODEL_PATH = "anomaly_model.pkl"
+# Sample data (you can replace this with your real dataset)
+data = {
+    "heart_rate": [72, 75, 71, 69, 180, 65, 85, 77, 66, 160],
+    "spO2": [98, 97, 99, 96, 90, 99, 97, 95, 98, 88],
+    "temperature": [36.7, 36.8, 37.0, 36.5, 39.2, 36.9, 37.1, 36.6, 36.8, 38.5]
+}
 
+df = pd.DataFrame(data)
 
-def train_model(df):
-    model = IsolationForest(contamination=0.1, random_state=42)
-    model.fit(df[['heart_rate', 'blood_oxygen']])
-    joblib.dump(model, MODEL_PATH)
-    print("✅ Model trained and saved.")
+# Use all 3 features
+X = df[["heart_rate", "spO2", "temperature"]]
 
+# Train Isolation Forest
+model = IsolationForest(contamination=0.2, random_state=42)
+model.fit(X)
 
-def detect_anomalies(df, model):
-    df = df.copy()
-    df['anomaly'] = model.predict(df[['heart_rate', 'blood_oxygen']])
-    df['anomaly'] = df['anomaly'].apply(
-        lambda x: 'Anomaly' if x == -1 else 'Normal')
-    return df
+# Save model to disk
+joblib.dump(model, "anomaly_model.pkl")
 
-
-def load_model():
-    if os.path.exists(MODEL_PATH):
-        return joblib.load(MODEL_PATH)
-    else:
-        raise FileNotFoundError("Model not found. Train the model first.")
+print("✅ Model trained and saved as anomaly_model.pkl using 3 features")
