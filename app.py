@@ -57,4 +57,4 @@ with st.form("doctor_request_form"):
         st.success("✅ Your request has been sent. A doctor will contact you soon.")
 
 st.markdown("---")
-st.caption("Built by Tony Wabuko & John Kuria • 2025")
+st.caption("Built by Tony Wabuko, Brian Sangura and John Kuria • 2025")
