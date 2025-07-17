@@ -1,62 +1,32 @@
-/* Dark Theme Styles */
-.stApp {
-    background: #121212; /* Dark background */
-    color: #ffffff; /* White text */
-    font-family: 'Arial', sans-serif;
+/* Absolute minimum dark theme */
+body, .stApp {
+  background-color: #111111 !important;
+  color: #ffffff !important;
 }
 
-/* Cards */
-.metric-container {
-    background: #1e1e1e; /* Darker cards */
-    color: #ffffff;
-    border-radius: 15px;
-    padding: 20px;
-    margin: 10px 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    border: 1px solid #333; /* Subtle border */
+/* Make all text visible */
+h1, h2, h3, h4, h5, h6, p, div, span {
+  color: #ffffff !important;
 }
 
-/* Text Colors */
-.metric-title {
-    color: #aaa; /* Lighter gray for labels */
-}
-.metric-value {
-    color: #ffffff; /* White for values */
-}
-
-/* Form Elements */
-.stTextInput>div>div>input,
-.stTextArea>div>div>textarea {
-    background: #2d2d2d;
-    color: white;
-    border: 1px solid #444;
+/* Input fields */
+.stTextInput input, .stNumberInput input, .stTextArea textarea {
+  background-color: #222222 !important;
+  color: white !important;
+  border-color: #444 !important;
 }
 
 /* Buttons */
-.stButton>button {
-    background: #3a3a3a;
-    color: white;
-    border: 1px solid #555;
-    transition: all 0.3s;
-}
-.stButton>button:hover {
-    background: #4a4a4a;
+.stButton button {
+  background-color: #333333 !important;
+  color: white !important;
+  border: 1px solid #555 !important;
 }
 
-/* Alerts */
-.stAlert {
-    background: #2d2d2d !important;
-    border-left: 4px solid #ff4b4b !important;
-}
-
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] {
-    background: #1e1e1e;
-}
-.stTabs [data-baseweb="tab"] {
-    color: #aaa !important;
-}
-.stTabs [aria-selected="true"] {
-    color: white !important;
-    background: #2d2d2d;
+/* Metric cards */
+.metric-box {
+  background: #222222;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
 }
