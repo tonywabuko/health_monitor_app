@@ -21,4 +21,4 @@ model.fit(X)
 # Save model
 joblib.dump(model, "anomaly_model.pkl")
 
-print("✅ Model retrained and saved using scikit-learn 1.4.2")
+print("✅ Model retrained and saved using scikit-learn 1.1.3")

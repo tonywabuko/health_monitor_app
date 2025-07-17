@@ -1,67 +1,85 @@
 import streamlit as st
-import numpy as np
-import joblib
 import pandas as pd
+import numpy as np
 import os
+import joblib
+from sklearn.ensemble import IsolationForest
+from datetime import datetime
 
-# Load the trained model
+# === Train model if not already saved ===
+
+
+def train_model():
+    data = {
+        "heart_rate": [72, 75, 71, 69, 180, 65, 85, 77, 66, 160],
+        "spO2": [98, 97, 99, 96, 90, 99, 97, 95, 98, 88],
+        "temperature": [36.7, 36.8, 37.0, 36.5, 39.2, 36.9, 37.1, 36.6, 36.8, 38.5]
+    }
+
+    df = pd.DataFrame(data)
+    X = df[["heart_rate", "spO2", "temperature"]]
+
+    model = IsolationForest(contamination=0.2, random_state=42)
+    model.fit(X)
+
+    joblib.dump(model, "anomaly_model.pkl")
+    print("✅ Model trained and saved as anomaly_model.pkl")
+
+# === Check if model exists; if not, train ===
+
+
+if not os.path.exists("anomaly_model.pkl"):
+    train_model()
+
+# === Load the trained model ===
+
 model = joblib.load("anomaly_model.pkl")
 
-# Streamlit app config
-st.set_page_config(
-    page_title="AI-Powered Health Monitoring", layout="centered")
-st.title("🩺 AI-Powered Health Monitoring System")
+# === Streamlit UI ===
 
-st.subheader("Enter Your Vital Signs")
+st.title("🧠 AI-Powered Health Monitoring System")
+st.write("Enter patient health data to detect potential anomalies.")
+
 heart_rate = st.number_input(
     "Heart Rate (bpm)", min_value=30, max_value=200, value=75)
 spO2 = st.number_input("Oxygen Saturation (%)",
-                       min_value=50, max_value=100, value=98)
+                       min_value=70, max_value=100, value=98)
 temperature = st.number_input(
-    "Body Temperature (°C)", min_value=30.0, max_value=42.0, value=36.7, step=0.1)
+    "Temperature (°C)", min_value=30.0, max_value=45.0, value=36.8)
 
-# Prediction
-if st.button("Check Health Status"):
+if st.button("Check for Anomaly"):
     input_data = np.array([[heart_rate, spO2, temperature]])
-    prediction = model.predict(input_data)
+    result = model.predict(input_data)
 
-    if prediction[0] == -1:
-        st.error("⚠️ Anomaly Detected! Your health readings may be abnormal.")
-    else:
-        st.success("✅ Your vital signs appear to be within normal range.")
+    if result[0] == -1:
+        st.error("🚨 Anomaly detected! Vitals appear abnormal.")
 
-# Divider
-st.markdown("---")
+        st.subheader("📞 Request a Doctor Consultation")
+        name = st.text_input("Your Name")
+        contact = st.text_input("Phone or Email")
 
-# Consultation Form
-st.subheader("📞 Request a Doctor Consultation")
-with st.form("consult_form"):
-    name = st.text_input("Full Name")
-    email = st.text_input("Email Address")
-    symptoms = st.text_area("Briefly Describe Your Symptoms")
-    submit = st.form_submit_button("Submit Request")
+        if st.button("Submit Request"):
+            if name and contact:
+                request_data = {
+                    "name": name,
+                    "contact": contact,
+                    "heart_rate": heart_rate,
+                    "spO2": spO2,
+                    "temperature": temperature,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
 
-    if submit:
-        if name and email and symptoms:
-            new_entry = {
-                "Name": name,
-                "Email": email,
-                "Symptoms": symptoms,
-                "Heart Rate": heart_rate,
-                "SpO2": spO2,
-                "Temperature": temperature
-            }
+                # Save to CSV
+                file_path = "doctor_requests.csv"
+                df = pd.DataFrame([request_data])
 
-            # Save to consultations.csv
-            if os.path.exists("consultations.csv"):
-                df = pd.read_csv("consultations.csv")
-                df = pd.concat([df, pd.DataFrame([new_entry])],
-                               ignore_index=True)
+                if os.path.exists(file_path):
+                    df.to_csv(file_path, mode='a', header=False, index=False)
+                else:
+                    df.to_csv(file_path, index=False)
+
+                st.success("✅ Your request has been submitted to a doctor.")
             else:
-                df = pd.DataFrame([new_entry])
-
-            df.to_csv("consultations.csv", index=False)
-            st.success(
-                "✅ Your request has been submitted. A doctor will reach out to you soon.")
-        else:
-            st.warning("⚠️ Please fill in all the fields before submitting.")
+                st.warning("Please fill in your name and contact information.")
+    else:
+        st.success("✅ Vitals are within the normal range. No anomaly detected.")
