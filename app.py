@@ -131,37 +131,71 @@ def health_monitor_page():
     st.markdown(render_html_template("header"), unsafe_allow_html=True)
     
     with st.container():
-        # Vital Signs Input
-        st.markdown(render_html_template(
-            "monitor_page",
-            content="""
-            <div class="vitals-form">
-                <h3>Enter Your Vital Signs</h3>
-            </div>
-            """
-        ), unsafe_allow_html=True)
+        # Vital Signs Section
+        st.markdown("### 📊 Enter Your Vital Signs", help="Provide your current health metrics")
         
         with st.form("vitals_form"):
             cols = st.columns(3)
             with cols[0]:
-                heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75)
+                heart_rate = st.number_input(
+                    "❤️ Heart Rate (bpm)", 
+                    min_value=40, 
+                    max_value=200, 
+                    value=75,
+                    help="Normal range: 60-100 bpm"
+                )
             with cols[1]:
-                spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97)
+                spO2 = st.number_input(
+                    "🫁 Blood Oxygen (%)", 
+                    min_value=70, 
+                    max_value=100, 
+                    value=97,
+                    help="Normal range: 95-100%"
+                )
             with cols[2]:
-                temp = st.number_input("Temperature (°C)", min_value=35.0, max_value=42.0, value=36.6)
+                temp = st.number_input(
+                    "🌡️ Temperature (°C)", 
+                    min_value=35.0, 
+                    max_value=42.0, 
+                    value=36.6,
+                    help="Normal range: 36.2-37.2°C"
+                )
             
-            if st.form_submit_button("Analyze Vitals"):
+            submitted = st.form_submit_button(
+                "Analyze Vitals",
+                help="Get instant analysis of your health metrics"
+            )
+            
+            if submitted:
                 # Analyze with ML model
                 model = train_model()
                 data = pd.DataFrame([[heart_rate, spO2, temp]], 
                                    columns=["heart_rate", "spO2", "temperature"])
                 prediction = model.predict(data)[0]
                 
-                # Display results
-                if prediction == -1:
-                    st.error("⚠️ Anomaly detected! Please consult a doctor.")
-                else:
-                    st.success("✅ Vitals are normal")
+                # Results container
+                with st.container():
+                    st.markdown("## 📝 Analysis Results")
+                    
+                    if prediction == -1:
+                        st.error("""
+                        ⚠️ **Anomaly Detected**  
+                        We've detected unusual readings in your vital signs.  
+                        Please consult a healthcare professional.
+                        """)
+                    else:
+                        st.success("""
+                        ✅ **Vitals Normal**  
+                        Your readings are within healthy ranges.
+                        """)
+                    
+                    # Display ranges
+                    st.markdown("""
+                    ### Normal Ranges:
+                    - ❤️ Heart Rate: 60-100 bpm
+                    - 🫁 SpO2: 95-100%
+                    - 🌡️ Temperature: 36.2-37.2°C
+                    """)
 
 # --- 7. Navigation ---
 PAGES = {
