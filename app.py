@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import bcrypt
-from model import train_model
+from model import train_and_save_model, load_model
 import os
 
 # Constants
