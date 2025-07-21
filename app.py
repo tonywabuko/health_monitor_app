@@ -1,92 +1,73 @@
 import streamlit as st
 import pandas as pd
 import bcrypt
-from model import train_and_save_model, load_model
 import os
+from model import train_and_save_model
 
-# Constants
-USER_CSV = "users.csv"
-MODEL_FILE = "anomaly.pkl"
-
-st.set_page_config(page_title="Health Monitor", layout="wide")
-
-# --- Utility Functions ---
-
-def load_users():
-    if not os.path.exists(USER_CSV):
-        return pd.DataFrame(columns=["email", "password"])
-    return pd.read_csv(USER_CSV)
-
-def save_user(email, password):
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    df = pd.DataFrame([[email, hashed_pw]], columns=["email", "password"])
-    df.to_csv(USER_CSV, mode="a", index=False, header=not os.path.exists(USER_CSV))
-
-def verify_user(email, password):
-    users = load_users()
-    if email in users["email"].values:
-        stored_pw = users.loc[users["email"] == email, "password"].values[0]
-        return bcrypt.checkpw(password.encode(), stored_pw.encode())
-    return False
-
+# Ensure the model is trained on first run
 def retrain_model_if_needed():
-    import numpy as np
-    import pandas as pd
-    if not os.path.exists(MODEL_FILE):
-        sample_data = pd.DataFrame(
-            np.random.normal(loc=[80, 98, 36.8, 16], scale=[10, 1, 0.4, 2], size=(100, 4)),
-            columns=["heart_rate", "spo2", "temperature", "respiration_rate"]
-        )
-      train_and_save_model()
+    if not os.path.exists("anomaly.pkl"):
+        train_and_save_model()
 
+retrain_model_if_needed()
 
-# --- Session State Initialization ---
+USERS_CSV = "users.csv"
+st.set_page_config(page_title="AI Health Monitor", page_icon="🩺", layout="centered")
+
+# Initialize session state
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# --- Login / Signup Interface ---
+def hash_password(password):
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(password, hashed):
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
 def login_signup():
-    st.title("🔐 Welcome to AI-Powered Health Monitor")
-    option = st.radio("Choose an option", ["Login", "Sign Up"])
+    st.title("🔐 Welcome to AI Health Monitoring System")
+    choice = st.radio("Login or Signup", ["Login", "Signup"], horizontal=True)
 
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    if option == "Login":
-        if st.button("Login"):
-            if verify_user(email, password):
-                st.success("✅ Login successful!")
-                st.session_state.logged_in = True
-                st.experimental_rerun()
+    if choice == "Signup":
+        if st.button("Create Account"):
+            if os.path.exists(USERS_CSV):
+                users = pd.read_csv(USERS_CSV)
             else:
-                st.error("❌ Incorrect email or password.")
-    else:
-        if st.button("Sign Up"):
-            users = load_users()
+                users = pd.DataFrame(columns=["email", "password"])
             if email in users["email"].values:
-                st.warning("⚠️ Email already registered. Please log in.")
+                st.warning("Email already registered. Please log in.")
             else:
-                save_user(email, password)
-                st.success("🎉 Account created. You can now log in.")
-                st.experimental_rerun()
+                hashed_pw = hash_password(password)
+                new_user = pd.DataFrame([[email, hashed_pw]], columns=["email", "password"])
+                users = pd.concat([users, new_user], ignore_index=True)
+                users.to_csv(USERS_CSV, index=False)
+                st.success("Account created! Please log in.")
 
-# --- Main App Logic ---
+    elif choice == "Login":
+        if st.button("Log In"):
+            if os.path.exists(USERS_CSV):
+                users = pd.read_csv(USERS_CSV)
+                if email in users["email"].values:
+                    hashed = users.loc[users["email"] == email, "password"].values[0]
+                    if verify_password(password, hashed):
+                        st.session_state.logged_in = True
+                        st.rerun()
+                    else:
+                        st.error("Incorrect password.")
+                else:
+                    st.error("User not found.")
+            else:
+                st.error("No users registered yet.")
+
 def main():
-    retrain_model_if_needed()
-
     if st.session_state.logged_in:
-        st.sidebar.title("Navigation")
-        page = st.sidebar.selectbox("Go to", ["Vitals Monitor", "Contact Doctor"])
-
-        if page == "Vitals Monitor":
-            import pages.health_monitor as health_monitor
-            health_monitor.run()
-        elif page == "Contact Doctor":
-            import pages.contact_doctor as contact_doctor
-            contact_doctor.run()
+        import pages.health_monitor as health_monitor
+        health_monitor.run()
     else:
         login_signup()
 
-# --- Run App ---
 if __name__ == "__main__":
     main()
