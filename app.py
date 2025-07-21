@@ -79,10 +79,10 @@ def main():
     page = st.sidebar.radio("Navigation", ["Health Monitor", "Contact Doctor"])
 
     if page == "Health Monitor":
-        from pages import 1_health_monitor as health_monitor
+        from pages import health_monitor as health_monitor
         health_monitor.run()
     elif page == "Contact Doctor":
-        from pages import 2_contact_doctor as contact_doctor
+        from pages import contact_doctor as contact_doctor
         contact_doctor.run()
 
 if __name__ == "__main__":
