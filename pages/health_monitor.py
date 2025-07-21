@@ -1,9 +1,6 @@
-# pages/health_monitor.py
 import streamlit as st
 import pandas as pd
-import numpy as np
 from model import load_model
-
 
 def run():
     st.title("🩺 Health Monitoring")
