@@ -2,28 +2,25 @@ import streamlit as st
 import pandas as pd
 import bcrypt
 from pathlib import Path
-from health_monitor import show_health_monitor
-from contact_doctor import show_contact_doctor
 
 # Constants
 USER_FILE = "users.csv"
 SESSION_KEY = "logged_in"
 
-# Initialize users file if not present
+# Initialize user file
 def init_user_file():
     if not Path(USER_FILE).exists():
         df = pd.DataFrame(columns=["username", "password"])
         df.to_csv(USER_FILE, index=False)
 
-# Hash password
+# Hashing and verification
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
-# Verify password
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# Validate user
+# User validation
 def validate_user(username, password):
     if not Path(USER_FILE).exists():
         return False
@@ -33,11 +30,11 @@ def validate_user(username, password):
         return verify_password(password, user.iloc[0]["password"])
     return False
 
-# Add new user
+# Add user
 def add_user(username, password):
     users = pd.read_csv(USER_FILE)
     if username in users["username"].values:
-        return False  # User exists
+        return False
     hashed = hash_password(password).decode()
     new_user = pd.DataFrame([{"username": username, "password": hashed}])
     updated_users = pd.concat([users, new_user], ignore_index=True)
@@ -46,8 +43,8 @@ def add_user(username, password):
 
 # Login/Signup Page
 def login_page():
-    st.title("Welcome to Health Monitor App")
-    st.subheader("Login or Sign Up to Continue")
+    st.title("🩺 AI-Powered Health Monitor")
+    st.subheader("Please log in or sign up to continue.")
 
     option = st.radio("Choose an option", ["Login", "Sign Up"])
 
@@ -60,29 +57,23 @@ def login_page():
                 st.session_state[SESSION_KEY] = True
                 st.session_state["username"] = username
                 st.success("✅ Logged in successfully!")
-                st.experimental_rerun()
+                st.switch_page("pages/1_health_monitor.py")  # redirect to Health Monitor
             else:
-                st.error("❌ Invalid username or password")
+                st.error("❌ Invalid username or password.")
         else:
             if add_user(username, password):
                 st.success("✅ Account created successfully! Please log in.")
             else:
                 st.error("❌ Username already exists.")
 
-# Main App Navigator
+# Run
 def main():
     init_user_file()
 
     if SESSION_KEY not in st.session_state or not st.session_state[SESSION_KEY]:
         login_page()
     else:
-        st.sidebar.title(f"Welcome, {st.session_state['username']}")
-        selection = st.sidebar.radio("Navigation", ["Health Monitor", "Contact Doctor"])
-
-        if selection == "Health Monitor":
-            show_health_monitor()
-        elif selection == "Contact Doctor":
-            show_contact_doctor()
+        st.switch_page("pages/1_health_monitor.py")
 
 if __name__ == "__main__":
     main()
