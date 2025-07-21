@@ -1,164 +1,70 @@
+# app.py
 import streamlit as st
 import pandas as pd
-import numpy as np
-from datetime import datetime
+import os
 
-try:
-    from model import load_model
-except ImportError as e:
-    st.error(f"Error importing model: {str(e)}")
-    st.stop()
+USER_FILE = "users.csv"
 
-# Constants
-CSV_URL = "https://raw.githubusercontent.com/tonywabuko/health_monitor_app/main/doctor_requests.csv"
-NORMAL_RANGES = {
-    "heart_rate": (60, 100),
-    "spO2": (95, 100),
-    "temperature": (36.2, 37.2)
-}
+# Initialize user database
+if not os.path.exists(USER_FILE):
+    df = pd.DataFrame(columns=["username", "password"])
+    df.to_csv(USER_FILE, index=False)
 
-# Page Config
-st.set_page_config(
-    page_title="AI-Powered Health Monitor",
-    page_icon="🏥",
-    layout="centered",
-    initial_sidebar_state="expanded"
-)
+# Authentication functions
+def add_user(username, password):
+    users = pd.read_csv(USER_FILE)
+    if username in users['username'].values:
+        return False
+    users = users.append({"username": username, "password": password}, ignore_index=True)
+    users.to_csv(USER_FILE, index=False)
+    return True
 
-# Custom CSS
-st.markdown("""
-<style>
-    .doctor-card {
-        background-color: #1e293b !important;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        color: white !important;
-        border-left: 4px solid #6366f1;
-    }
-    .doctor-card h4 {
-        color: #ffffff !important;
-        margin-bottom: 12px;
-    }
-    .doctor-card p {
-        color: #e2e8f0 !important;
-        margin-bottom: 8px;
-    }
-</style>
-""", unsafe_allow_html=True)
+def validate_user(username, password):
+    users = pd.read_csv(USER_FILE)
+    return any((users['username'] == username) & (users['password'] == password))
 
-# Header
-st.title("🩺 AI-Powered Health Monitoring System")
-st.markdown("Monitor your vital signs in real-time and get personalized health insights.")
+# Login/Signup UI
+def login_signup():
+    st.title("🔐 Welcome to AI Health Monitor")
+    choice = st.selectbox("Choose an option", ["Login", "Sign Up"])
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-# Health Metrics
-st.header("📊 Health Metrics")
-cols = st.columns(3)
-with cols[0]:
-    heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=75, 
-                               help=f"Normal range: {NORMAL_RANGES['heart_rate'][0]}-{NORMAL_RANGES['heart_rate'][1]} bpm")
-with cols[1]:
-    spO2 = st.number_input("Blood Oxygen (%)", min_value=70, max_value=100, value=97,
-                          help=f"Normal range: {NORMAL_RANGES['spO2'][0]}-{NORMAL_RANGES['spO2'][1]}%")
-with cols[2]:
-    temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=42.0, value=36.8, step=0.1,
-                                help=f"Normal range: {NORMAL_RANGES['temperature'][0]}-{NORMAL_RANGES['temperature'][1]}°C",
-                                format="%.1f")
+    if choice == "Login":
+        if st.button("Login"):
+            if validate_user(username, password):
+                st.session_state["logged_in"] = True
+                st.session_state["username"] = username
+                st.success("✅ Logged in successfully!")
+                st.experimental_rerun()
+            else:
+                st.error("❌ Invalid credentials.")
+    else:
+        if st.button("Sign Up"):
+            if add_user(username, password):
+                st.success("✅ Account created. You can now log in.")
+            else:
+                st.warning("⚠️ Username already exists.")
 
-# Load model and predict
-try:
-    model = load_model()
-    data = pd.DataFrame([[heart_rate, spO2, temperature]], 
-                       columns=["heart_rate", "spO2", "temperature"])
-    prediction = model.predict(data)[0]
-    
-    # Manual range checks
-    hr_normal = NORMAL_RANGES["heart_rate"][0] <= heart_rate <= NORMAL_RANGES["heart_rate"][1]
-    spo2_normal = NORMAL_RANGES["spO2"][0] <= spO2 <= NORMAL_RANGES["spO2"][1]
-    temp_normal = NORMAL_RANGES["temperature"][0] <= temperature <= NORMAL_RANGES["temperature"][1]
-    
-    is_anomaly = prediction == -1 or not all([hr_normal, spo2_normal, temp_normal])
+# App router
+def main():
+    if "logged_in" not in st.session_state:
+        st.session_state["logged_in"] = False
 
-except Exception as e:
-    st.error(f"Model error: {str(e)}")
-    is_anomaly = not all([
-        NORMAL_RANGES["heart_rate"][0] <= heart_rate <= NORMAL_RANGES["heart_rate"][1],
-        NORMAL_RANGES["spO2"][0] <= spO2 <= NORMAL_RANGES["spO2"][1],
-        NORMAL_RANGES["temperature"][0] <= temperature <= NORMAL_RANGES["temperature"][1]
-    ])
+    if not st.session_state["logged_in"]:
+        login_signup()
+    else:
+        st.sidebar.title(f"👤 Welcome, {st.session_state['username']}")
+        page = st.sidebar.selectbox("Navigate", ["Health Monitor", "Contact Doctor", "Logout"])
+        if page == "Health Monitor":
+            import pages.health_monitor as health_monitor
+            health_monitor.run()
+        elif page == "Contact Doctor":
+            import pages.contact_doctor as contact_doctor
+            contact_doctor.run()
+        elif page == "Logout":
+            st.session_state["logged_in"] = False
+            st.experimental_rerun()
 
-# Display results
-if is_anomaly:
-    st.error("""
-    ⚠️ Anomaly Detected! Please consult a doctor.
-    
-    ### Abnormal Values:
-    """ + 
-    (f"- ❌ Heart Rate: {heart_rate} bpm (Normal: 60-100)\n" if not hr_normal else "") +
-    (f"- ❌ SpO2: {spO2}% (Normal: 95-100)\n" if not spo2_normal else "") +
-    (f"- ❌ Temperature: {temperature:.1f}°C (Normal: 36.2-37.2)\n" if not temp_normal else ""))
-else:
-    st.success("""
-    ✅ All vitals appear normal.
-    
-    ### Your Readings:
-    - Heart rate: {heart_rate} bpm (Normal: 60-100)
-    - SpO2: {spO2}% (Normal: 95-100)
-    - Temperature: {temperature:.1f}°C (Normal: 36.2-37.2)
-    """.format(heart_rate=heart_rate, spO2=spO2, temperature=temperature))
-
-# Doctors Section
-st.header("👨‍⚕️ Available Doctors")
-with st.expander("View Doctors", expanded=True):
-    cols = st.columns(2)
-    with cols[0]:
-        st.markdown("""
-        <div class="doctor-card">
-            <h4>Dr. Tony Wabuko</h4>
-            <p>tonywabuko@gmail.com</p>
-            <p>+254 700 000000</p>
-            <p>General Practitioner</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with cols[1]:
-        st.markdown("""
-        <div class="doctor-card">
-            <h4>Dr. Brian Sangura</h4>
-            <p>sangura.bren@gmail.com</p>
-            <p>+254 700 000001</p>
-            <p>ICU Specialist</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# Contact Form
-with st.form("doctor_form"):
-    st.subheader("📩 Contact a Doctor")
-    name = st.text_input("Your Name")
-    email = st.text_input("Your Email")
-    message = st.text_area("Your Message")
-    
-    submitted = st.form_submit_button("Send Request")
-    if submitted:
-        try:
-            new_entry = pd.DataFrame([{
-                "name": name,
-                "email": email,
-                "message": message,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }])
-            
-            try:
-                existing = pd.read_csv(CSV_URL)
-                updated = pd.concat([existing, new_entry], ignore_index=True)
-            except:
-                updated = new_entry
-            
-            updated.to_csv("doctor_requests.csv", index=False)
-            st.success("✅ Request submitted successfully!")
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
-
-# Footer
-st.markdown("---")
-st.markdown("AI Health Monitor © 2023 | Version 1.0")
+if __name__ == "__main__":
+    main()
