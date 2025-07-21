@@ -3,70 +3,77 @@ import pandas as pd
 import bcrypt
 import os
 
-# File path
-USER_FILE = "users.csv"
+# Session setup
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-# Initialize session state
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+USERS_FILE = "users.csv"
 
-def load_users():
-    if not os.path.exists(USER_FILE):
-        return pd.DataFrame(columns=["username", "password"])
-    return pd.read_csv(USER_FILE)
+def hash_password(password):
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-def save_user(username, hashed_password):
-    df = load_users()
-    df = pd.concat([df, pd.DataFrame([{"username": username, "password": hashed_password}])], ignore_index=True)
-    df.to_csv(USER_FILE, index=False)
-
-def login(username, password):
-    df = load_users()
-    user = df[df['username'] == username]
-    if not user.empty:
-        stored_hashed = user.iloc[0]["password"].encode()
-        return bcrypt.checkpw(password.encode(), stored_hashed)
-    return False
-
-def signup(username, password):
-    df = load_users()
-    if username in df["username"].values:
-        return False
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    save_user(username, hashed_pw)
-    return True
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 def login_signup():
-    st.title("🔐 Welcome to AI Health Monitor")
-    option = st.radio("Choose an option", ["Login", "Sign Up"])
+    st.title("👤 Welcome to AI-Powered Health Monitor")
+    choice = st.selectbox("Login / Signup", ["Login", "Sign Up"])
 
-    username = st.text_input("Username")
+    email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    if option == "Login":
+    if choice == "Sign Up":
+        confirm_password = st.text_input("Confirm Password", type="password")
+        if st.button("Sign Up"):
+            if password != confirm_password:
+                st.error("❌ Passwords do not match.")
+                return
+
+            hashed_pw = hash_password(password)
+            user_data = {"email": email, "password": hashed_pw}
+            df = pd.DataFrame([user_data])
+
+            if os.path.exists(USERS_FILE):
+                existing = pd.read_csv(USERS_FILE)
+                if email in existing['email'].values:
+                    st.warning("⚠️ User already exists.")
+                    return
+                df = pd.concat([existing, df], ignore_index=True)
+
+            df.to_csv(USERS_FILE, index=False)
+            st.success("✅ Account created! Please log in.")
+
+    elif choice == "Login":
         if st.button("Login"):
-            if login(username, password):
-                st.session_state.authenticated = True
+            if not os.path.exists(USERS_FILE):
+                st.error("❌ No users found.")
+                return
+
+            users = pd.read_csv(USERS_FILE)
+            user = users[users['email'] == email]
+
+            if not user.empty and check_password(password, user.iloc[0]['password']):
+                st.session_state.logged_in = True
                 st.success("✅ Logged in successfully!")
                 st.experimental_rerun()
             else:
                 st.error("❌ Invalid credentials.")
-    else:
-        if st.button("Sign Up"):
-            if signup(username, password):
-                st.success("✅ Account created. Please log in.")
-            else:
-                st.error("❌ Username already exists.")
 
 def main():
-    if not st.session_state.authenticated:
-        login_signup()
-    else:
-        from pages import health_monitor as hm
-        hm.run()
+    if st.session_state.logged_in:
+        # Hide sidebar menu before login
+        with st.sidebar:
+            st.markdown("## Navigation")
+            page = st.selectbox("Choose a page", ["🏥 Monitor Vitals", "📨 Contact Doctor"])
 
-        from pages import contact_doctor as cd
-        cd.run()
+        if page == "🏥 Monitor Vitals":
+            import pages.health_monitor as health_monitor
+            health_monitor.run()
+        elif page == "📨 Contact Doctor":
+            import pages.contact_doctor as contact_doctor
+            contact_doctor.run()
+    else:
+        login_signup()
 
 if __name__ == "__main__":
     main()
