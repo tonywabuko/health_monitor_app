@@ -1,82 +1,91 @@
 import streamlit as st
 import pandas as pd
-import os
 import bcrypt
+from model import train_model
+import os
 
-st.set_page_config(page_title="AI Health Monitor", page_icon="🩺", layout="centered")
+# Constants
+USER_CSV = "users.csv"
+MODEL_FILE = "anomaly.pkl"
 
-# Ensure session state keys exist
+st.set_page_config(page_title="Health Monitor", layout="wide")
+
+# --- Utility Functions ---
+
+def load_users():
+    if not os.path.exists(USER_CSV):
+        return pd.DataFrame(columns=["email", "password"])
+    return pd.read_csv(USER_CSV)
+
+def save_user(email, password):
+    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    df = pd.DataFrame([[email, hashed_pw]], columns=["email", "password"])
+    df.to_csv(USER_CSV, mode="a", index=False, header=not os.path.exists(USER_CSV))
+
+def verify_user(email, password):
+    users = load_users()
+    if email in users["email"].values:
+        stored_pw = users.loc[users["email"] == email, "password"].values[0]
+        return bcrypt.checkpw(password.encode(), stored_pw.encode())
+    return False
+
+def retrain_model_if_needed():
+    import numpy as np
+    import pandas as pd
+    if not os.path.exists(MODEL_FILE):
+        sample_data = pd.DataFrame(
+            np.random.normal(loc=[80, 98, 36.8, 16], scale=[10, 1, 0.4, 2], size=(100, 4)),
+            columns=["heart_rate", "spo2", "temperature", "respiration_rate"]
+        )
+        train_model(sample_data)
+
+# --- Session State Initialization ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-if "mode" not in st.session_state:
-    st.session_state.mode = "login"
 
+# --- Login / Signup Interface ---
 def login_signup():
-    st.title("🔐 Welcome to the AI Health Monitoring System")
+    st.title("🔐 Welcome to AI-Powered Health Monitor")
+    option = st.radio("Choose an option", ["Login", "Sign Up"])
 
-    def switch_mode():
-        st.session_state.mode = "signup" if st.session_state.mode == "login" else "login"
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
 
-    st.button("🔄 Switch to Signup" if st.session_state.mode == "login" else "🔄 Switch to Login", on_click=switch_mode)
-
-    with st.form(key="auth_form"):
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-        if st.session_state.mode == "signup":
-            confirm_password = st.text_input("Confirm Password", type="password")
-
-        submit = st.form_submit_button("Login" if st.session_state.mode == "login" else "Sign Up")
-
-        if submit:
-            if os.path.exists("users.csv") and os.path.getsize("users.csv") > 0:
-                existing = pd.read_csv("users.csv")
-                if "email" not in existing.columns:
-                    existing = pd.DataFrame(columns=["email", "password"])
+    if option == "Login":
+        if st.button("Login"):
+            if verify_user(email, password):
+                st.success("✅ Login successful!")
+                st.session_state.logged_in = True
+                st.experimental_rerun()
             else:
-                existing = pd.DataFrame(columns=["email", "password"])
-
-            if st.session_state.mode == "signup":
-                if password != confirm_password:
-                    st.error("❌ Passwords do not match.")
-                    return
-
-                if email in existing["email"].values:
-                    st.error("❌ Email already registered.")
-                    return
-
-                hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-                new_user = pd.DataFrame([[email, hashed_pw]], columns=["email", "password"])
-                new_user.to_csv("users.csv", mode="a", header=not os.path.exists("users.csv"), index=False)
-                st.success("✅ Signup successful! Please log in.")
-                st.session_state.mode = "login"
+                st.error("❌ Incorrect email or password.")
+    else:
+        if st.button("Sign Up"):
+            users = load_users()
+            if email in users["email"].values:
+                st.warning("⚠️ Email already registered. Please log in.")
+            else:
+                save_user(email, password)
+                st.success("🎉 Account created. You can now log in.")
                 st.experimental_rerun()
 
-            else:
-                user = existing[existing["email"] == email]
-                if not user.empty and bcrypt.checkpw(password.encode(), user["password"].values[0].encode()):
-                    st.session_state.logged_in = True
-                    st.success("✅ Logged in successfully!")
-                    st.experimental_rerun()
-                else:
-                    st.error("❌ Invalid email or password.")
-
+# --- Main App Logic ---
 def main():
+    retrain_model_if_needed()
+
     if st.session_state.logged_in:
-        # Show sidebar and redirect to health monitor
-        with st.sidebar:
-            st.write("📋 Navigation")
-        import pages.health_monitor as health_monitor
-        health_monitor.run()
+        st.sidebar.title("Navigation")
+        page = st.sidebar.selectbox("Go to", ["Vitals Monitor", "Contact Doctor"])
+
+        if page == "Vitals Monitor":
+            import pages.health_monitor as health_monitor
+            health_monitor.run()
+        elif page == "Contact Doctor":
+            import pages.contact_doctor as contact_doctor
+            contact_doctor.run()
     else:
-        hide_sidebar_style = """
-        <style>
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-        </style>
-        """
-        st.markdown(hide_sidebar_style, unsafe_allow_html=True)
         login_signup()
 
+# --- Run App ---
 if __name__ == "__main__":
     main()
