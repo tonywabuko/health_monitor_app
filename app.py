@@ -1,29 +1,32 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import os
 
 USER_FILE = "users.csv"
 
-# Initialize user database
-if not os.path.exists(USER_FILE):
+# Ensure user CSV exists and has headers
+if not os.path.exists(USER_FILE) or os.stat(USER_FILE).st_size == 0:
     df = pd.DataFrame(columns=["username", "password"])
     df.to_csv(USER_FILE, index=False)
 
-# Authentication functions
 def add_user(username, password):
     users = pd.read_csv(USER_FILE)
     if username in users['username'].values:
         return False
-    users = users.append({"username": username, "password": password}, ignore_index=True)
+
+    new_user = pd.DataFrame([{"username": username, "password": password}])
+    users = pd.concat([users, new_user], ignore_index=True)
     users.to_csv(USER_FILE, index=False)
     return True
 
 def validate_user(username, password):
-    users = pd.read_csv(USER_FILE)
+    try:
+        users = pd.read_csv(USER_FILE)
+    except pd.errors.EmptyDataError:
+        return False
+
     return any((users['username'] == username) & (users['password'] == password))
 
-# Login/Signup UI
 def login_signup():
     st.title("🔐 Welcome to AI Health Monitor")
     choice = st.selectbox("Choose an option", ["Login", "Sign Up"])
@@ -46,7 +49,6 @@ def login_signup():
             else:
                 st.warning("⚠️ Username already exists.")
 
-# App router
 def main():
     if "logged_in" not in st.session_state:
         st.session_state["logged_in"] = False
