@@ -37,7 +37,8 @@ def retrain_model_if_needed():
             np.random.normal(loc=[80, 98, 36.8, 16], scale=[10, 1, 0.4, 2], size=(100, 4)),
             columns=["heart_rate", "spo2", "temperature", "respiration_rate"]
         )
-        train_model(sample_data)
+      train_and_save_model()
+
 
 # --- Session State Initialization ---
 if "logged_in" not in st.session_state:
