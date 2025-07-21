@@ -1,95 +1,88 @@
 import streamlit as st
 import pandas as pd
-import os
 import bcrypt
+from pathlib import Path
+from health_monitor import show_health_monitor
+from contact_doctor import show_contact_doctor
 
+# Constants
 USER_FILE = "users.csv"
+SESSION_KEY = "logged_in"
 
-# Ensure users.csv exists and has correct headers
-if not os.path.exists(USER_FILE) or os.stat(USER_FILE).st_size == 0:
-    df = pd.DataFrame(columns=["username", "password"])
-    df.to_csv(USER_FILE, index=False)
+# Initialize users file if not present
+def init_user_file():
+    if not Path(USER_FILE).exists():
+        df = pd.DataFrame(columns=["username", "password"])
+        df.to_csv(USER_FILE, index=False)
 
-# Hash the password
+# Hash password
 def hash_password(password):
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
-# Check hashed password
-def check_password(password, hashed):
+# Verify password
+def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# Add new user with hashed password
+# Validate user
+def validate_user(username, password):
+    if not Path(USER_FILE).exists():
+        return False
+    users = pd.read_csv(USER_FILE)
+    user = users[users["username"] == username]
+    if not user.empty:
+        return verify_password(password, user.iloc[0]["password"])
+    return False
+
+# Add new user
 def add_user(username, password):
     users = pd.read_csv(USER_FILE)
-    if username in users['username'].values:
-        return False
-    hashed_password = hash_password(password)
-    new_user = pd.DataFrame([{"username": username, "password": hashed_password}])
-    users = pd.concat([users, new_user], ignore_index=True)
-    users.to_csv(USER_FILE, index=False)
+    if username in users["username"].values:
+        return False  # User exists
+    hashed = hash_password(password).decode()
+    new_user = pd.DataFrame([{"username": username, "password": hashed}])
+    updated_users = pd.concat([users, new_user], ignore_index=True)
+    updated_users.to_csv(USER_FILE, index=False)
     return True
 
-# Validate login with hashed password
-def validate_user(username, password):
-    try:
-        users = pd.read_csv(USER_FILE)
-    except pd.errors.EmptyDataError:
-        return False
+# Login/Signup Page
+def login_page():
+    st.title("Welcome to Health Monitor App")
+    st.subheader("Login or Sign Up to Continue")
 
-    if username not in users['username'].values:
-        return False
+    option = st.radio("Choose an option", ["Login", "Sign Up"])
 
-    stored_hashed_pw = users[users['username'] == username]['password'].values[0]
-    return check_password(password, stored_hashed_pw)
-
-# Login/signup form
-def login_signup():
-    st.title("🔐 Welcome to AI Health Monitor")
-    choice = st.selectbox("Choose an option", ["Login", "Sign Up"])
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
-    if choice == "Login":
-        if st.button("Login"):
+    if st.button("Submit"):
+        if option == "Login":
             if validate_user(username, password):
-                st.session_state["logged_in"] = True
+                st.session_state[SESSION_KEY] = True
                 st.session_state["username"] = username
-                st.session_state["page"] = "Health Monitor"
                 st.success("✅ Logged in successfully!")
+                st.experimental_rerun()
             else:
-                st.error("❌ Invalid credentials.")
-    else:
-        if st.button("Sign Up"):
+                st.error("❌ Invalid username or password")
+        else:
             if add_user(username, password):
-                st.success("✅ Account created. You can now log in.")
+                st.success("✅ Account created successfully! Please log in.")
             else:
-                st.warning("⚠️ Username already exists.")
+                st.error("❌ Username already exists.")
 
-# Main app logic
+# Main App Navigator
 def main():
-    if "logged_in" not in st.session_state:
-        st.session_state["logged_in"] = False
-    if "page" not in st.session_state:
-        st.session_state["page"] = "Login"
+    init_user_file()
 
-    if not st.session_state["logged_in"]:
-        login_signup()
+    if SESSION_KEY not in st.session_state or not st.session_state[SESSION_KEY]:
+        login_page()
     else:
-        st.sidebar.title(f"👤 Welcome, {st.session_state['username']}")
-        page = st.sidebar.selectbox("Navigate", ["Health Monitor", "Contact Doctor", "Logout"])
+        st.sidebar.title(f"Welcome, {st.session_state['username']}")
+        selection = st.sidebar.radio("Navigation", ["Health Monitor", "Contact Doctor"])
 
-        if page == "Health Monitor":
-            import pages.health_monitor as health_monitor
-            health_monitor.run()
-
-        elif page == "Contact Doctor":
-            import pages.contact_doctor as contact_doctor
-            contact_doctor.run()
-
-        elif page == "Logout":
-            st.session_state["logged_in"] = False
-            st.session_state["page"] = "Login"
-            st.success("👋 You have been logged out.")
+        if selection == "Health Monitor":
+            show_health_monitor()
+        elif selection == "Contact Doctor":
+            show_contact_doctor()
 
 if __name__ == "__main__":
     main()
