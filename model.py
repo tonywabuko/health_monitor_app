@@ -8,15 +8,14 @@ MODEL_PATH = "anomaly_detector.pkl"
 
 def generate_training_data(n=1000):
     np.random.seed(42)
-    heart_rate = np.random.normal(loc=75, scale=5, size=n)
-    spO2 = np.random.normal(loc=98, scale=1, size=n)
-    temperature = np.random.normal(loc=36.8, scale=0.3, size=n)
-    df = pd.DataFrame({
+    heart_rate = np.random.normal(75, 5, n)
+    spO2 = np.random.normal(98, 1, n)
+    temperature = np.random.normal(36.8, 0.3, n)
+    return pd.DataFrame({
         "heart_rate": heart_rate,
         "spO2": spO2,
         "temperature": temperature
     })
-    return df
 
 def train_and_save_model():
     df = generate_training_data()
