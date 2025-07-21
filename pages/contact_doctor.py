@@ -1,10 +1,9 @@
-# pages/contact_doctor.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import os
 
 DOCTOR_FILE = "doctor_requests.csv"
-
 
 def run():
     st.title("👨‍⚕️ Contact a Doctor")
@@ -16,18 +15,21 @@ def run():
 
     if st.button("Submit Request"):
         if name and email and message:
-            data = {
+            new_request = {
                 "name": name,
                 "email": email,
                 "message": message,
                 "timestamp": datetime.now().isoformat()
             }
-            df = pd.DataFrame([data])
-            if not os.path.exists(DOCTOR_FILE):
-                df.to_csv(DOCTOR_FILE, index=False)
+
+            new_df = pd.DataFrame([new_request])
+            if not os.path.exists(DOCTOR_FILE) or os.stat(DOCTOR_FILE).st_size == 0:
+                new_df.to_csv(DOCTOR_FILE, index=False)
             else:
-                df.to_csv(DOCTOR_FILE, mode='a', header=False, index=False)
-            st.success(
-                "📨 Your request has been submitted. A doctor will reach out to you soon.")
+                existing_df = pd.read_csv(DOCTOR_FILE)
+                updated_df = pd.concat([existing_df, new_df], ignore_index=True)
+                updated_df.to_csv(DOCTOR_FILE, index=False)
+
+            st.success("📨 Your request has been submitted. A doctor will reach out to you soon.")
         else:
             st.warning("⚠️ Please fill out all fields.")
