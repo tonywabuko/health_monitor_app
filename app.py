@@ -96,4 +96,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.markdown("AI Health Monitor © 2023 | Version 1.0")
+st.markdown("AI Health Monitor © 2025| Version 1.0")
