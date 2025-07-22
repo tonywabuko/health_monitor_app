@@ -1,4 +1,4 @@
-# Add this import at the top
+
 from model import predict_anomaly
 
 # Add this function to the Helper Functions section
