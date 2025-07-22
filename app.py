@@ -1,83 +1,94 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-import csv
+import streamlit as st
+import pandas as pd
+import hashlib
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Change this to a secure secret key
+# User data storage
+USER_DATA = "users.csv"
 
-# File paths
-USERS_FILE = 'users.csv'
+# Initialize user data file
+if not os.path.exists(USER_DATA):
+    pd.DataFrame(columns=["username", "email", "password"]).to_csv(USER_DATA, index=False)
 
-def init_users_file():
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['username', 'email', 'password_hash'])
+def make_hashes(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
 
-@app.route('/')
-def home():
-    if 'username' in session:
-        return redirect(url_for('dashboard'))  # Replace with your dashboard route
-    return redirect(url_for('login'))
+def check_hashes(password, hashed_text):
+    return make_hashes(password) == hashed_text
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        with open(USERS_FILE, 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['username'] == username and check_password_hash(row['password_hash'], password):
-                    session['username'] = username
-                    return redirect(url_for('dashboard'))  # Replace with your dashboard route
-        
-        flash('Invalid username or password')
-        return redirect(url_for('login'))
+def login_user(username, password):
+    users_df = pd.read_csv(USER_DATA)
+    if username in users_df['username'].values:
+        stored_password = users_df.loc[users_df['username'] == username, 'password'].values[0]
+        return check_hashes(password, stored_password)
+    return False
+
+def create_user(username, email, password):
+    users_df = pd.read_csv(USER_DATA)
+    if username in users_df['username'].values:
+        return False
+    hashed_password = make_hashes(password)
+    new_user = pd.DataFrame([[username, email, hashed_password]], 
+                           columns=["username", "email", "password"])
+    users_df = pd.concat([users_df, new_user], ignore_index=True)
+    users_df.to_csv(USER_DATA, index=False)
+    return True
+
+def login_page():
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
     
-    return render_template('login.html')
+    if st.button("Login"):
+        if login_user(username, password):
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password")
+    
+    if st.button("Don't have an account? Sign up"):
+        st.session_state.show_signup = True
+        st.experimental_rerun()
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        
-        # Basic validation
+def signup_page():
+    st.title("Sign Up")
+    username = st.text_input("Username")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    
+    if st.button("Create Account"):
         if password != confirm_password:
-            flash('Passwords do not match')
-            return redirect(url_for('signup'))
-        
-        # Check if username already exists
-        with open(USERS_FILE, 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['username'] == username:
-                    flash('Username already exists')
-                    return redirect(url_for('signup'))
-        
-        # Hash password and save user
-        password_hash = generate_password_hash(password)
-        with open(USERS_FILE, 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([username, email, password_hash])
-        
-        flash('Account created successfully! Please log in.')
-        return redirect(url_for('login'))
+            st.error("Passwords don't match")
+        elif create_user(username, email, password):
+            st.success("Account created successfully! Please log in.")
+            st.session_state.show_signup = False
+            st.experimental_rerun()
+        else:
+            st.error("Username already exists")
     
-    return render_template('signup.html')
+    if st.button("Already have an account? Sign in"):
+        st.session_state.show_signup = False
+        st.experimental_rerun()
 
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
+def main():
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'show_signup' not in st.session_state:
+        st.session_state.show_signup = False
+    
+    if not st.session_state.logged_in:
+        if st.session_state.show_signup:
+            signup_page()
+        else:
+            login_page()
+    else:
+        st.success(f"Welcome {st.session_state.username}!")
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.experimental_rerun()
+        # Your main app content goes here
 
-# Initialize the users file when the app starts
-init_users_file()
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    main()
