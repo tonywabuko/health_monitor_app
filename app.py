@@ -310,7 +310,7 @@ else:
         with doc_cols[0]:
             st.markdown("""
             <div class="metric-card">
-                <h4>Dr. Tony Wabuko</h4>
+                <h4>Dr. Wabuko</h4>
                 <p>General Practitioner</p>
                 <p>📧 tonywabuko@gmail.com</p>
                 <p>📞 +254 700 000000</p>
@@ -321,10 +321,10 @@ else:
         with doc_cols[1]:
             st.markdown("""
             <div class="metric-card">
-                <h4>Dr. Brian Sangura</h4>
+                <h4>Dr. Sangura</h4>
                 <p>ICU Specialist</p>
                 <p>📧 sangura.bren@gmail.com</p>
-                <p>📞 +254 700 000001</p>
+                <p>📞 +254 720638389</p>
                 <p>🕒 Available: 24/7 Emergency</p>
             </div>
             """, unsafe_allow_html=True)
