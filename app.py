@@ -313,7 +313,7 @@ else:
                 <h4>Dr. Wabuko</h4>
                 <p>General Practitioner</p>
                 <p>📧 tonywabuko@gmail.com</p>
-                <p>📞 +254 700 000000</p>
+                <p>📞 +254 799104517</p>
                 <p>🕒 Available: Mon-Fri, 9AM-5PM</p>
             </div>
             """, unsafe_allow_html=True)
