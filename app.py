@@ -28,6 +28,11 @@ NORMAL_RANGES = {
 }
 USER_DB_FILE = "users.json"
 
+# Ensure the users.json file exists
+if not os.path.exists(USER_DB_FILE):
+    with open(USER_DB_FILE, 'w') as f:
+        json.dump({}, f)
+
 # Page Config
 st.set_page_config(
     page_title="AI-Powered Health Monitor",
@@ -36,7 +41,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS (same as before)
 st.markdown("""
 <style>
     .doctor-card {
@@ -67,14 +72,15 @@ st.markdown("""
 
 # User management functions
 def load_users():
-    if os.path.exists(USER_DB_FILE):
+    try:
         with open(USER_DB_FILE, 'r') as f:
             return json.load(f)
-    return {}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 def save_users(users):
     with open(USER_DB_FILE, 'w') as f:
-        json.dump(users, f)
+        json.dump(users, f, indent=4)
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -99,7 +105,7 @@ def authenticate_user(username, password):
         return False, "Invalid password"
     return True, "Authentication successful"
 
-# Check if user is logged in
+# Initialize session state
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.show_signup = False
@@ -123,7 +129,9 @@ if not st.session_state.logged_in:
                 
                 submitted = st.form_submit_button("Sign Up")
                 if submitted:
-                    if password != confirm_password:
+                    if not username or not email or not password:
+                        st.error("All fields are required")
+                    elif password != confirm_password:
                         st.error("Passwords don't match")
                     elif len(password) < 6:
                         st.error("Password must be at least 6 characters")
@@ -132,6 +140,9 @@ if not st.session_state.logged_in:
                         if success:
                             st.success(message)
                             st.session_state.show_signup = False
+                            st.session_state.logged_in = True
+                            st.session_state.username = username
+                            st.rerun()
                         else:
                             st.error(message)
             
@@ -152,13 +163,16 @@ if not st.session_state.logged_in:
                 
                 submitted = st.form_submit_button("Login")
                 if submitted:
-                    success, message = authenticate_user(username, password)
-                    if success:
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        st.rerun()
+                    if not username or not password:
+                        st.error("Both fields are required")
                     else:
-                        st.error(message)
+                        success, message = authenticate_user(username, password)
+                        if success:
+                            st.session_state.logged_in = True
+                            st.session_state.username = username
+                            st.rerun()
+                        else:
+                            st.error(message)
             
             if st.button("Don't have an account? Sign up"):
                 st.session_state.show_signup = True
