@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from model import load_model  # Assuming you have this model
+from model import load_model  # Ensure this is available
 
 # Emergency illness prediction mapping
 ILLNESS_MAPPING = {
@@ -65,6 +65,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 def show_health_dashboard():
     st.title("🩺 Health Monitoring Dashboard")
@@ -130,11 +131,14 @@ def show_health_dashboard():
     try:
         # Load model and predict
         model = load_model()
-        input_data = pd.DataFrame([[
-            heart_rate, spO2, temperature, resp_rate, bp_sys, bp_dia
-        ]], columns=[
-            "heart_rate", "spO2", "temperature", "resp_rate", "bp_sys", "bp_dia"
-        ])
+        input_data = pd.DataFrame([{
+            "heart_rate": heart_rate,
+            "spO2": spO2,
+            "temperature": temperature,
+            "resp_rate": resp_rate,
+            "blood_pressure_sys": bp_sys,
+            "blood_pressure_dia": bp_dia
+        }])
         
         prediction = model.predict(input_data)[0]
         predicted_illness = ILLNESS_MAPPING.get(prediction, "Unknown Condition")
@@ -166,7 +170,7 @@ def show_health_dashboard():
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.success("""
+            st.success(f"""
             ✅ All vitals appear normal. No emergency conditions detected.
             
             ### Your Current Readings:
@@ -175,14 +179,7 @@ def show_health_dashboard():
             - Temperature: {temperature:.1f}°C (Normal: 36.2-37.2)
             - Respiratory Rate: {resp_rate} (Normal: 12-20)
             - Blood Pressure: {bp_sys}/{bp_dia} (Normal: 90-120/60-80)
-            """.format(
-                heart_rate=heart_rate, 
-                spO2=spO2, 
-                temperature=temperature,
-                resp_rate=resp_rate,
-                bp_sys=bp_sys,
-                bp_dia=bp_dia
-            ))
+            """)
             
     except Exception as e:
         st.error(f"Error in health assessment: {str(e)}")
@@ -240,7 +237,10 @@ def show_health_dashboard():
         
         submitted = st.form_submit_button("Send Request")
         if submitted:
-            try:
+            # Basic input validation
+            if not name or not email or not message or '@' not in email:
+                st.error("Please provide a valid name, email, and message.")
+            else:
                 new_entry = pd.DataFrame([{
                     "name": name,
                     "email": email,
@@ -251,13 +251,14 @@ def show_health_dashboard():
                 try:
                     existing = pd.read_csv("doctor_requests.csv")
                     updated = pd.concat([existing, new_entry], ignore_index=True)
-                except:
+                except Exception:
                     updated = new_entry
                 
-                updated.to_csv("doctor_requests.csv", index=False)
-                st.success("✅ Request submitted successfully!")
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+                try:
+                    updated.to_csv("doctor_requests.csv", index=False)
+                    st.success("✅ Request submitted successfully!")
+                except Exception as e:
+                    st.error(f"Error saving request: {str(e)}")
 
 if __name__ == "__main__":
     if 'logged_in' in st.session_state and st.session_state.logged_in:
