@@ -1,99 +1,119 @@
-# 🩺 AI-Powered Health Monitoring System
+# 🏥 Health Companion Pro
 
-**Live App**: [https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app/](https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app/)
+**AI-Powered Health Monitoring System**  
+_Deployed at: [https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app](https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app)_
 
-## 📌 Overview
+---
 
-This project leverages artificial intelligence to monitor users' health using data from wearable devices. It detects anomalies in vital signs like heart rate and blood oxygen levels, provides personalized health insights, and facilitates medical consultations.
+## 🌍 SDG Alignment
 
-## 🔑 Key Features
+**Primary SDG**: SDG 3 – *Good Health and Well-being*
 
-- 📊 **Real-time Health Monitoring**: Uses simulated or wearable device data (e.g., heart rate, SpO₂).
-- 🚨 **Anomaly Detection**: Identifies abnormal patterns using a trained Isolation Forest model.
-- 🧠 **Personalized Recommendations**: Advises users based on current health metrics.
-- 📥 **Doctor Contact Form**: Users can contact doctors directly via a built-in form.
-- 📝 **Data Logging**: Saves doctor requests to a CSV file (`doctor_requests.csv`) for follow-up.
+**Problem Addressed**:  
+Limited access to timely health monitoring contributes to preventable complications and delayed interventions. Many communities lack early detection systems for non-communicable disease (NCD) indicators like abnormal heart rate, SpO₂, and body temperature.
 
-## ⚙️ Technologies Used
+**Solution**:  
+Health Companion Pro is an AI-powered web application that enables real-time anomaly detection using vital sign inputs. Users receive actionable health insights and can immediately contact a doctor for follow-up care.
 
-- **Python**
-- **Streamlit** – Web app interface
-- **Pandas, NumPy** – Data manipulation
-- **Scikit-learn** – Anomaly detection model (Isolation Forest)
-- **CSV** – Persistent local storage of user contact requests
-- **GitHub + Streamlit Cloud** – Deployment
+---
+
+## ⚙️ Features
+
+- 🔐 **User Authentication** (Sign up/Login with password hashing)
+- 🧠 **AI Anomaly Detection** (Isolation Forest model trained on synthetic vital data)
+- 🤖 **AI Health Chatbot** (Predefined logic for basic health advice)
+- 🩺 **Symptom Checker** (Multi-select symptoms with smart suggestions)
+- 📊 **Health Dashboard** (Input-based health scoring and trend analysis)
+- 📞 **Contact Doctor** (Message form with data saved to CSV for offline triage)
+- 🧘 **Clean UI/UX** (Custom CSS, dark mode ready, mobile responsive)
+
+---
+
+## 🧠 AI/ML Approach
+
+- **Model**: Isolation Forest for unsupervised anomaly detection
+- **Inputs**: Heart Rate (bpm), SpO₂ (%), Temperature (°C)
+- **Output**: Binary anomaly classification with score and guidance
+- **Data**: Synthetic training data with normal distributions
+
+---
+
+## 🛠 Tools & Tech Stack
+
+| Category           | Tool/Framework             |
+|--------------------|----------------------------|
+| Frontend           | Streamlit                  |
+| Machine Learning   | Scikit-learn (Isolation Forest) |
+| Data Handling      | Pandas, NumPy, CSV, JSON   |
+| Styling            | Custom CSS with dark mode  |
+| Authentication     | SHA-256 password hashing   |
+| Deployment         | Streamlit Cloud            |
+| Version Control    | Git & GitHub               |
+
+---
+
+## 🚀 Deployment
+
+The application is live and accessible at:  
+🔗 [https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app](https://healthmonitorapp-jmvho9hf9kcqcpyhdf2amb.streamlit.app)
+
+---
+
+## ✅ Ethical & Sustainability Considerations
+
+| Consideration      | Implementation                                                 |
+|--------------------|----------------------------------------------------------------|
+| **Bias Mitigation**     | Trained on diverse synthetic data representing typical vitals     |
+| **Privacy**             | Local storage of user info (JSON/CSV); no third-party data used   |
+| **Energy Efficiency**   | Lightweight ML model ensures low compute resource use             |
+| **Scalability**         | Ready for deployment on low-cost infrastructure (Streamlit Cloud) |
+
+---
 
 ## 📁 Project Structure
 
-health_monitor_app/
-│
-├── app.py # Main Streamlit app
-├── model.py # ML model training (runs once on deployment)
-├── healthdata.py # Simulated health data generator
-├── doctor_requests.csv # Stores doctor consultation requests
-├── requirements.txt # App dependencies
-├── README.md # Project documentation
-└── pycache/ # Python cache files (ignored)
+├── app.py # Main Streamlit application
+├── model.py # Isolation Forest training and prediction
+├── users.json # Registered user credentials
+├── doctor_requests.csv # Contact form submissions
+├── users.csv # (Optional) legacy or backup user info
+├── devcontainer.json # Container settings for development
+└── pages/ # Future scope: modular page splitting
 
-markdown
+yaml
 Copy
 Edit
 
-## 🧪 How It Works
+---
 
-1. **User opens the app** → Inputs health data (simulated or real).
-2. **Model processes input** → Detects anomalies using Isolation Forest.
-3. **Output displayed** → Shows health status and recommendations.
-4. **User fills contact form (optional)** → Stored in `doctor_requests.csv`.
+## 👥 Authors
 
-## 👨‍⚕️ Doctor Contact Info
+- **Tony Wabuko** – [tonywabuko@gmail.com](mailto:tonywabuko@gmail.com)  
+- **Brian Sangura** – [sangura.bren@gmail.com](mailto:sangura.bren@gmail.com)  
+- **John Kuria** – [kuria4115@gmail.com](mailto:kuria4115@gmail.com)
 
-Users can reach out to the doctors below directly from the app:
+---
 
-- **Tony Wabuko** – [tonywabuko@gmail.com](mailto:tonywabuko@gmail.com)
-- **Brian Sangura** – [sangura.bren@gmail.com](mailto:sangura.bren@gmail.com)
+## 🧭 Future Enhancements
 
-## 🧑‍💻 Contributors
+- 📈 Save and plot historical vital signs per user
+- 🔔 Real-time alerts (SMS/Email) for abnormal readings
+- 🔐 Use bcrypt or Argon2 for stronger password hashing
+- 🌐 API integration with wearable devices (e.g., Fitbit, Apple Health)
+- 📊 Admin dashboard for doctors to monitor incoming requests
 
-- **Tony Wabuko** – AI Lead, Developer  
-- **Brian Sangura** – Data Scientist  Developer
-- **John Kuria** – Developer Frontend Integration & QA
+---
 
-## 🚀 Setup Instructions (Local)
+## 📜 License
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/tonywabuko/health_monitor_app.git
-   cd health_monitor_app
-Install dependencies
+This project is released under the **MIT License**. You are free to use, modify, and distribute it with credit to the original authors.
 
-bash
-Copy
-Edit
-pip install -r requirements.txt
-Run the app
+---
 
-bash
-Copy
-Edit
-streamlit run app.py
-⚠️ Make sure doctor_requests.csv exists in the root folder. If not, create it manually with headers: Name,Email,Message.
+## 🙌 Acknowledgements
 
-📈 Model Retraining
-The anomaly detection model is retrained automatically upon deployment using model.py. This avoids pickle incompatibility issues.
+- Streamlit for the intuitive frontend framework  
+- scikit-learn for easy ML implementation  
+- UN SDG Framework for guiding purpose-driven tech innovation
 
-🧩 Future Improvements
-Integration with real wearable APIs (e.g., Fitbit, Garmin)
-
-Authentication and user profiles
-
-Cloud database for persistent storage
-
-SMS/Email alerts to doctors
-
-✅ Project Status
-🟢 Live and functional
-Last updated: July 2025
-Deployed on Streamlit Cloud
-
-This project was built as part of the AI for Software Engineering course and demonstrates a real-world AI application for public health.
+> "By blending AI and software engineering with real-world health needs, we empower users to take control of their wellness — one heartbeat at a time."
