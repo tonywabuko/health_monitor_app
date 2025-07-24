@@ -124,6 +124,68 @@ def authenticate_user(username, password):
         return False, "Invalid password"
     return True, "Authentication successful"
 
+# Health Analysis Functions
+def generate_health_response(prompt):
+    """Simulate AI health assistant responses"""
+    prompt = prompt.lower()
+    
+    if any(word in prompt for word in ["headache", "migraine"]):
+        return """**Possible causes:** Tension, dehydration, or eyestrain.  
+**Recommendations:**  
+- Drink water  
+- Rest in a quiet, dark room  
+- Consider over-the-counter pain relief  
+⚠️ Seek medical help if severe or persistent"""
+    
+    elif any(word in prompt for word in ["fever", "temperature"]):
+        return """**Care advice:**  
+- Stay hydrated  
+- Rest  
+- Use fever-reducing medication if needed  
+⚠️ Contact doctor if fever > 39°C or lasts >3 days"""
+    
+    elif "heart" in prompt:
+        return """**Important:**  
+Chest pain or palpitations require immediate medical attention.  
+For general heart health:  
+- Maintain healthy diet  
+- Regular exercise  
+- Monitor blood pressure"""
+    
+    else:
+        return """I'm your AI health assistant. For accurate medical advice, please consult with a healthcare professional.  
+I can help with general health information about:  
+- Common symptoms  
+- Healthy living tips  
+- Medication questions"""
+
+def analyze_symptoms(symptoms):
+    """Basic symptom analysis"""
+    symptoms = [s.lower() for s in symptoms]
+    conditions = []
+    emergency = False
+    
+    if "chest pain" in symptoms or "shortness of breath" in symptoms:
+        conditions.append("Possible cardiac issue")
+        emergency = True
+    if "fever" in symptoms and "cough" in symptoms:
+        conditions.append("Respiratory infection")
+    if "dizziness" in symptoms and "nausea" in symptoms:
+        conditions.append("Possible vertigo or migraine")
+    if "fatigue" in symptoms and "muscle aches" in symptoms:
+        conditions.append("Viral infection")
+    
+    if not conditions:
+        conditions.append("General illness")
+    
+    recommendation = "Rest and monitor symptoms" if not emergency else "Seek immediate medical care"
+    
+    return {
+        "conditions": conditions,
+        "recommendation": recommendation,
+        "emergency": emergency
+    }
+
 # Initialize Session State
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -356,68 +418,6 @@ else:
                         st.success("Message sent successfully! The doctor will respond within 24 hours.")
                     except Exception as e:
                         st.error(f"Error sending message: {str(e)}")
-
-# Helper Functions
-def generate_health_response(prompt):
-    """Simulate AI health assistant responses"""
-    prompt = prompt.lower()
-    
-    if any(word in prompt for word in ["headache", "migraine"]):
-        return """**Possible causes:** Tension, dehydration, or eyestrain.  
-**Recommendations:**  
-- Drink water  
-- Rest in a quiet, dark room  
-- Consider over-the-counter pain relief  
-⚠️ Seek medical help if severe or persistent"""
-    
-    elif any(word in prompt for word in ["fever", "temperature"]):
-        return """**Care advice:**  
-- Stay hydrated  
-- Rest  
-- Use fever-reducing medication if needed  
-⚠️ Contact doctor if fever > 39°C or lasts >3 days"""
-    
-    elif "heart" in prompt:
-        return """**Important:**  
-Chest pain or palpitations require immediate medical attention.  
-For general heart health:  
-- Maintain healthy diet  
-- Regular exercise  
-- Monitor blood pressure"""
-    
-    else:
-        return """I'm your AI health assistant. For accurate medical advice, please consult with a healthcare professional.  
-I can help with general health information about:  
-- Common symptoms  
-- Healthy living tips  
-- Medication questions"""
-
-def analyze_symptoms(symptoms):
-    """Basic symptom analysis"""
-    symptoms = [s.lower() for s in symptoms]
-    conditions = []
-    emergency = False
-    
-    if "chest pain" in symptoms or "shortness of breath" in symptoms:
-        conditions.append("Possible cardiac issue")
-        emergency = True
-    if "fever" in symptoms and "cough" in symptoms:
-        conditions.append("Respiratory infection")
-    if "dizziness" in symptoms and "nausea" in symptoms:
-        conditions.append("Possible vertigo or migraine")
-    if "fatigue" in symptoms and "muscle aches" in symptoms:
-        conditions.append("Viral infection")
-    
-    if not conditions:
-        conditions.append("General illness")
-    
-    recommendation = "Rest and monitor symptoms" if not emergency else "Seek immediate medical care"
-    
-    return {
-        "conditions": conditions,
-        "recommendation": recommendation,
-        "emergency": emergency
-    }
 
 if __name__ == "__main__":
     pass
