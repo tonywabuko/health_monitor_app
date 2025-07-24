@@ -240,16 +240,16 @@ else:
             <p class="sidebar-title">NAVIGATION</p>
         """, unsafe_allow_html=True)
         
-        # Navigation buttons with icons
+        # Navigation buttons without icons
         nav_options = [
-            ("🩺 Health Monitor", "Health Monitor"),
-            ("📊 Dashboard", "Dashboard"),
-            ("👨‍⚕️ Contact Doctor", "Contact Doctor")
+            ("Health Monitor", "Health Monitor"),
+            ("Dashboard", "Dashboard"),
+            ("Contact Doctor", "Contact Doctor")
         ]
         
-        for icon, page in nav_options:
+        for text, page in nav_options:
             if st.button(
-                icon + " " + page,
+                text,
                 key=f"nav_{page}",
                 use_container_width=True,
                 type="primary" if st.session_state.current_page == page else "secondary"
