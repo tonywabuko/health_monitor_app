@@ -33,7 +33,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Updated CSS for better visibility in dark mode
 st.markdown("""
 <style>
     .metric-card {
@@ -58,16 +58,18 @@ st.markdown("""
         100% { opacity: 1; }
     }
     .health-tip {
-        background-color: #e3f2fd;
+        background-color: #2d3748;
         padding: 1rem;
         border-radius: 10px;
         margin: 1rem 0;
+        color: white;
     }
     .anomaly-details {
-        background-color: #fff3cd;
+        background-color: #2d3748;
         border-radius: 10px;
         padding: 1rem;
         margin: 1rem 0;
+        color: white;
     }
     .sidebar-section {
         margin-bottom: 1.5rem;
@@ -83,18 +85,27 @@ st.markdown("""
         border-color: #2d3748;
     }
     .anomaly-alert {
-        background-color: #fff8f8;
+        background-color: #2a1a1a;
         border-left: 6px solid #ff4b4b;
         padding: 1rem;
         margin: 1rem 0;
         border-radius: 0 8px 8px 0;
+        color: #ffffff;
     }
     .normal-results {
-        background-color: #f8fff8;
+        background-color: #1a2a1a;
         border-left: 6px solid #4CAF50;
         padding: 1rem;
         margin: 1rem 0;
         border-radius: 0 8px 8px 0;
+        color: #ffffff;
+    }
+    .stChatMessage {
+        background-color: #1e293b;
+    }
+    .stTextInput input {
+        background-color: #1e293b;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -337,18 +348,18 @@ else:
             if result['is_anomaly']:
                 st.markdown(f"""
                 <div class="anomaly-alert">
-                    <h4 style='color: #ff4b4b; margin-top: 0;'>⚠️ Anomaly Detected</h4>
+                    <h4 style='color: #ff8080; margin-top: 0;'>⚠️ Anomaly Detected</h4>
                     <p style='font-size: 1.1rem;'>{result['message']}</p>
                     <p><b>Anomaly Score:</b> {result['score']:.2f}</p>
                     <div style='margin-top: 1rem;'>
-                        <h5>🔍 Details:</h5>
+                        <h5 style='color: #ff8080;'>🔍 Details:</h5>
                         <ul>
                             <li><b>Heart Rate:</b> {hr} bpm (Normal: 60-100)</li>
                             <li><b>SpO2:</b> {spo2}% (Normal: 95-100)</li>
                             <li><b>Temperature:</b> {temp}°C (Normal: 36.2-37.2)</li>
                         </ul>
                     </div>
-                    <p style='color: #ff4b4b; font-weight: bold;'>
+                    <p style='color: #ff8080; font-weight: bold;'>
                         Please consult with a healthcare professional.
                     </p>
                 </div>
@@ -356,11 +367,11 @@ else:
             else:
                 st.markdown(f"""
                 <div class="normal-results">
-                    <h4 style='color: #4CAF50; margin-top: 0;'>✓ Normal Results</h4>
+                    <h4 style='color: #80ff80; margin-top: 0;'>✓ Normal Results</h4>
                     <p style='font-size: 1.1rem;'>{result['message']}</p>
                     <p><b>Health Score:</b> {result['score']:.2f}</p>
                     <div style='margin-top: 1rem;'>
-                        <h5>Your Readings:</h5>
+                        <h5 style='color: #80ff80;'>Your Readings:</h5>
                         <ul>
                             <li><b>Heart Rate:</b> {hr} bpm</li>
                             <li><b>SpO2:</b> {spo2}%</li>
