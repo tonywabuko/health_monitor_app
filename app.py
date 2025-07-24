@@ -255,7 +255,7 @@ else:
                     st.write(response)
                     st.session_state.health_chat.append({"role": "assistant", "content": response})
         
-        with st.expander("🩺 Symptom Checker"):
+       with st.expander("🩺 Symptom Checker"):
             symptoms = st.multiselect(
                 "Select symptoms",
                 ["Fever", "Cough", "Headache", "Chest pain"]
@@ -263,7 +263,7 @@ else:
             if st.button("Analyze"):
                 if symptoms:
                     analysis = analyze_symptoms(symptoms)
-                    st.write(f"**Conditions:** {', '.join(analysis['conditions']}")
+                    st.write(f"**Conditions:** {', '.join(analysis['conditions'])}")  # Fixed this line
                     st.write(f"**Action:** {analysis['recommendation']}")
     
     elif st.session_state.current_page == "Dashboard":
