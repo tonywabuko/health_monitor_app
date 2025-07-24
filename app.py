@@ -69,6 +69,19 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
     }
+    .sidebar-section {
+        margin-bottom: 1.5rem;
+    }
+    .sidebar-title {
+        color: #6366f1;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    .sidebar-divider {
+        margin: 0.5rem 0;
+        border-color: #2d3748;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -210,21 +223,60 @@ if not st.session_state.logged_in:
             st.session_state.show_signup = True
             st.rerun()
 else:
-    # Main Application
+    # Main Application with Enhanced Sidebar
     with st.sidebar:
-        st.write(f"Welcome, {st.session_state.username}!")
-        st.session_state.current_page = st.selectbox(
-            "Navigation",
-            ["Health Monitor", "Dashboard", "Contact Doctor"],
-            index=["Health Monitor", "Dashboard", "Contact Doctor"].index(st.session_state.current_page)
-        )
+        # Welcome Section
+        st.markdown(f"""
+        <div class="sidebar-section">
+            <h3 style="color: #6366f1; margin-bottom: 0;">Welcome,</h3>
+            <h3 style="color: #6366f1; margin-top: 0;">{st.session_state.username}!</h3>
+            <hr class="sidebar-divider">
+        </div>
+        """, unsafe_allow_html=True)
         
-        if st.button("Logout"):
+        # Navigation Section
+        st.markdown("""
+        <div class="sidebar-section">
+            <p class="sidebar-title">NAVIGATION</p>
+        """, unsafe_allow_html=True)
+        
+        # Navigation buttons with icons
+        nav_options = [
+            ("🩺 Health Monitor", "Health Monitor"),
+            ("📊 Dashboard", "Dashboard"),
+            ("👨‍⚕️ Contact Doctor", "Contact Doctor")
+        ]
+        
+        for icon, page in nav_options:
+            if st.button(
+                icon + " " + page,
+                key=f"nav_{page}",
+                use_container_width=True,
+                type="primary" if st.session_state.current_page == page else "secondary"
+            ):
+                st.session_state.current_page = page
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Account Section
+        st.markdown("""
+        <div class="sidebar-section">
+            <hr class="sidebar-divider">
+            <p class="sidebar-title">ACCOUNT</p>
+        """, unsafe_allow_html=True)
+        
+        if st.button(
+            "🚪 Logout",
+            use_container_width=True,
+            type="primary"
+        ):
             st.session_state.update({
                 'logged_in': False,
                 'username': None
             })
             st.rerun()
+        
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # Page Routing
     if st.session_state.current_page == "Health Monitor":
