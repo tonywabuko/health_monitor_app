@@ -413,4 +413,21 @@ else:
             message = st.text_area("Your Message")
             
             if st.form_submit_button("Send Message"):
+                # Save the doctor request
+                request_data = {
+                    "name": st.session_state.username,
+                    "email": load_users()[st.session_state.username]['email'],
+                    "message": message,
+                    "timestamp": datetime.now().isoformat(),
+                    "doctor": doctor
+                }
+                
+                # Append to existing requests
+                try:
+                    existing = pd.read_csv(DOCTOR_REQUESTS_FILE)
+                    updated = pd.concat([existing, pd.DataFrame([request_data])], ignore_index=True)
+                    updated.to_csv(DOCTOR_REQUESTS_FILE, index=False)
+                except:
+                    pd.DataFrame([request_data]).to_csv(DOCTOR_REQUESTS_FILE, index=False)
+                
                 st.success("Message sent to doctor!")
