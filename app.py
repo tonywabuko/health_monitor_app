@@ -126,22 +126,104 @@ def authenticate_user(username, password):
 
 # Health Analysis Functions
 def generate_health_response(prompt):
-    """Simulate AI health assistant responses"""
-    prompt = prompt.lower()
+    """AI health assistant with medical Q&A knowledge"""
+    prompt = prompt.lower().strip()
     
+    # Common Medical Questions and Answers
+    medical_knowledge = {
+        # General Health
+        "what should i do for a fever": """**For fever care:**
+- Rest and stay hydrated
+- Take paracetamol 1g every 6 hours (max 4g/day) OR ibuprofen 400mg every 8 hours with food
+- Use cool compresses
+- Monitor temperature regularly
+⚠️ Seek medical help if:
+- Fever > 103°F (39.4°C)
+- Lasts more than 3 days
+- Accompanied by rash or difficulty breathing""",
+        
+        "how to treat a headache": """**Headache relief:**
+1. Drink water (dehydration often causes headaches)
+2. Rest in a quiet, dark room
+3. Apply cold compress to forehead
+4. Gentle neck stretches
+5. Medication options:
+   - Paracetamol 1g every 6 hours
+   - Ibuprofen 400mg every 8 hours with food
+
+⚠️ Seek emergency care for:
+- Sudden, severe "thunderclap" headache
+- Headache after head injury
+- With fever, stiff neck, or confusion""",
+        
+        "when should i worry about a cough": """**Cough evaluation:**
+🟢 Normal if:
+- Lasts <3 weeks (common cold)
+- No fever or mild fever
+
+🟡 See a doctor if:
+- Lasts >3 weeks
+- Produces blood or yellow/green mucus
+- Accompanied by fever >100.4°F
+
+🔴 Emergency if:
+- Difficulty breathing
+- Blue lips or face
+- Severe chest pain""",
+        
+        "signs of dehydration": """**Dehydration symptoms:**
+- Dry mouth/tongue
+- Dark yellow urine
+- Dizziness
+- Fatigue
+- Sunken eyes (in children)
+
+**Prevention:**
+- Drink small amounts frequently
+- Increase fluids when sick or active
+- Watch for signs in elderly/children""",
+        
+        "normal blood pressure range": """**Blood pressure categories:**
+- Normal: <120/<80 mmHg
+- Elevated: 120-129/<80
+- Stage 1 Hypertension: 130-139/80-89
+- Stage 2 Hypertension: ≥140/≥90
+
+💡 Check your BP regularly. Lifestyle changes can help maintain healthy levels.""",
+        
+        "how much sleep do i need": """**Recommended sleep:**
+- Newborns (0-3 months): 14-17 hours
+- Adults (18-64): 7-9 hours
+- Older adults (65+): 7-8 hours
+
+**Sleep hygiene tips:**
+- Consistent sleep schedule
+- Dark, cool bedroom
+- Avoid screens before bed
+- Limit caffeine after 2pm"""
+    }
+    
+    # Check if question matches known medical queries
+    for question, answer in medical_knowledge.items():
+        if question in prompt:
+            return answer
+    
+    # Fallback responses for general health topics
     if any(word in prompt for word in ["headache", "migraine"]):
         return """**Possible causes:** Tension, dehydration, or eyestrain.  
 **Recommendations:**  
 - Drink water  
 - Rest in a quiet, dark room  
-- Consider over-the-counter pain relief  
+- Consider paracetamol 1g or ibuprofen 400mg (with food)  
 ⚠️ Seek medical help if severe or persistent"""
     
     elif any(word in prompt for word in ["fever", "temperature"]):
         return """**Care advice:**  
 - Stay hydrated  
 - Rest  
-- Use fever-reducing medication if needed  
+- Medication options:
+  - Paracetamol 1g every 6 hours (max 4g/day)
+  - Ibuprofen 400mg every 8 hours with food
 ⚠️ Contact doctor if fever > 39°C or lasts >3 days"""
     
     elif "heart" in prompt:
@@ -153,11 +235,15 @@ For general heart health:
 - Monitor blood pressure"""
     
     else:
-        return """I'm your AI health assistant. For accurate medical advice, please consult with a healthcare professional.  
-I can help with general health information about:  
-- Common symptoms  
-- Healthy living tips  
-- Medication questions"""
+        return """I'm your AI health assistant. Here are some questions I can help with:
+- What should I do for a fever?
+- How to treat a headache?
+- When should I worry about a cough?
+- What are signs of dehydration?
+- What's normal blood pressure?
+- How much sleep do I need?
+
+For accurate medical advice, please consult with a healthcare professional."""
 
 def analyze_symptoms(symptoms):
     """Basic symptom analysis"""
