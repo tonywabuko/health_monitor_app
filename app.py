@@ -63,21 +63,7 @@ st.markdown("""
         border-radius: 10px;
         margin: 1rem 0;
     }
-    .progress-container {
-        height: 20px;
-        background-color: #e0e0e0;
-        border-radius: 10px;
-        margin: 1rem 0;
-    }
-    .progress-bar {
-        height: 100%;
-        border-radius: 10px;
-        background-color: #4caf50;
-        text-align: center;
-        color: white;
-        font-size: 12px;
-    }
-    .anomaly-card {
+    .anomaly-details {
         background-color: #fff3cd;
         border-radius: 10px;
         padding: 1rem;
@@ -281,10 +267,25 @@ else:
         
         if st.button("Check for Anomalies"):
             result = predict_anomalies(hr, spo2, temp)
+            
             if result['is_anomaly']:
                 st.error(f"{result['message']} (Score: {result['score']:.2f})")
+                with st.expander("Anomaly Details"):
+                    st.markdown("""
+                    <div class="anomaly-details">
+                        <h4>⚠️ Abnormal Vital Signs Detected</h4>
+                        <p>One or more of your readings are outside normal ranges:</p>
+                        <ul>
+                            <li><b>Heart Rate:</b> Normal (60-100 bpm)</li>
+                            <li><b>SpO2:</b> Normal (95-100%)</li>
+                            <li><b>Temperature:</b> Normal (36.2-37.2°C)</li>
+                        </ul>
+                        <p>Please consult with a doctor if you feel unwell.</p>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
                 st.success(f"{result['message']} (Score: {result['score']:.2f})")
+                st.balloons()
         
         # Health Trends
         st.header("Weekly Trends")
@@ -298,12 +299,34 @@ else:
     elif st.session_state.current_page == "Contact Doctor":
         st.title("👨‍⚕️ Contact Doctor")
         
+        st.subheader("Available Doctors")
+        doc_cols = st.columns(2)
+        
+        with doc_cols[0]:
+            st.markdown("""
+            <div class="metric-card">
+                <h4>Dr. Wabuko</h4>
+                <p>General Practitioner</p>
+                <p>📧 tonywabuko@gmail.com</p>
+                <p>📞 +254 799104517</p>
+                <p>🕒 Available: Mon-Fri, 9AM-5PM</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with doc_cols[1]:
+            st.markdown("""
+            <div class="metric-card">
+                <h4>Dr. Sangura</h4>
+                <p>ICU Specialist</p>
+                <p>📧 sangura.bren@gmail.com</p>
+                <p>📞 +254 720638389</p>
+                <p>🕒 Available: 24/7 Emergency</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with st.form("contact_form"):
-            doctor = st.selectbox("Select Doctor", ["Dr. Smith", "Dr. Johnson"])
-            message = st.text_area("Message")
+            doctor = st.selectbox("Select Doctor", ["Dr. Wabuko", "Dr. Sangura"])
+            message = st.text_area("Your Message")
             
-            if st.form_submit_button("Send"):
+            if st.form_submit_button("Send Message"):
                 st.success("Message sent to doctor!")
-
-if __name__ == "__main__":
-    st.write("Health Companion Pro is running!")
