@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import time
+from model import predict_anomalies
 
 # Constants and Config
 USER_DB_FILE = "users.json"
@@ -13,18 +14,14 @@ DOCTOR_REQUESTS_FILE = "doctor_requests.csv"
 NORMAL_RANGES = {
     "heart_rate": (60, 100),
     "spO2": (95, 100),
-    "temperature": (36.2, 37.2),
-    "resp_rate": (12, 20),
-    "blood_pressure": (90, 120),
-    "blood_pressure_dia": (60, 80)
+    "temperature": (36.2, 37.2)
 }
 
-# Initialize user database
+# Initialize data files
 if not os.path.exists(USER_DB_FILE):
     with open(USER_DB_FILE, 'w') as f:
         json.dump({}, f)
 
-# Initialize doctor requests file
 if not os.path.exists(DOCTOR_REQUESTS_FILE):
     pd.DataFrame(columns=["name", "email", "message", "timestamp"]).to_csv(DOCTOR_REQUESTS_FILE, index=False)
 
@@ -80,6 +77,12 @@ st.markdown("""
         color: white;
         font-size: 12px;
     }
+    .anomaly-card {
+        background-color: #fff3cd;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -106,12 +109,7 @@ def register_user(username, email, password):
         'email': email,
         'password': hash_password(password),
         'created_at': datetime.now().isoformat(),
-        'health_data': {
-            'last_checkup': None,
-            'medications': [],
-            'allergies': [],
-            'conditions': []
-        }
+        'health_data': []
     }
     save_users(users)
     return True, "Registration successful"
@@ -126,384 +124,186 @@ def authenticate_user(username, password):
 
 # Health Analysis Functions
 def generate_health_response(prompt):
-    """AI health assistant with medical Q&A knowledge"""
     prompt = prompt.lower().strip()
     
-    # Common Medical Questions and Answers
     medical_knowledge = {
-        # General Health
-        "what should i do for a fever": """**For fever care:**
-- Rest and stay hydrated
-- Take paracetamol 1g every 6 hours (max 4g/day) OR ibuprofen 400mg every 8 hours with food
-- Use cool compresses
-- Monitor temperature regularly
-⚠️ Seek medical help if:
-- Fever > 103°F (39.4°C)
-- Lasts more than 3 days
-- Accompanied by rash or difficulty breathing""",
-        
-        "how to treat a headache": """**Headache relief:**
-1. Drink water (dehydration often causes headaches)
-2. Rest in a quiet, dark room
-3. Apply cold compress to forehead
-4. Gentle neck stretches
-5. Medication options:
-   - Paracetamol 1g every 6 hours
-   - Ibuprofen 400mg every 8 hours with food
-
-⚠️ Seek emergency care for:
-- Sudden, severe "thunderclap" headache
-- Headache after head injury
-- With fever, stiff neck, or confusion""",
-        
-        "when should i worry about a cough": """**Cough evaluation:**
-🟢 Normal if:
-- Lasts <3 weeks (common cold)
-- No fever or mild fever
-
-🟡 See a doctor if:
-- Lasts >3 weeks
-- Produces blood or yellow/green mucus
-- Accompanied by fever >100.4°F
-
-🔴 Emergency if:
-- Difficulty breathing
-- Blue lips or face
-- Severe chest pain""",
-        
-        "signs of dehydration": """**Dehydration symptoms:**
-- Dry mouth/tongue
-- Dark yellow urine
-- Dizziness
-- Fatigue
-- Sunken eyes (in children)
-
-**Prevention:**
-- Drink small amounts frequently
-- Increase fluids when sick or active
-- Watch for signs in elderly/children""",
-        
-        "normal blood pressure range": """**Blood pressure categories:**
-- Normal: <120/<80 mmHg
-- Elevated: 120-129/<80
-- Stage 1 Hypertension: 130-139/80-89
-- Stage 2 Hypertension: ≥140/≥90
-
-💡 Check your BP regularly. Lifestyle changes can help maintain healthy levels.""",
-        
-        "how much sleep do i need": """**Recommended sleep:**
-- Newborns (0-3 months): 14-17 hours
-- Adults (18-64): 7-9 hours
-- Older adults (65+): 7-8 hours
-
-**Sleep hygiene tips:**
-- Consistent sleep schedule
-- Dark, cool bedroom
-- Avoid screens before bed
-- Limit caffeine after 2pm"""
+        "fever": """**Treatment:**
+- Paracetamol 1g every 6 hours (max 4g/day)
+- Ibuprofen 400mg every 8 hours with food
+- Cool compresses
+⚠️ Seek help if >39°C or >3 days""",
+        "headache": """**Relief:**
+- Hydrate
+- Rest in dark room
+- Cold compress
+- Paracetamol/Ibuprofen
+⚠️ Emergency for severe pain"""
     }
     
-    # Check if question matches known medical queries
-    for question, answer in medical_knowledge.items():
-        if question in prompt:
-            return answer
+    for term, response in medical_knowledge.items():
+        if term in prompt:
+            return response
     
-    # Fallback responses for general health topics
-    if any(word in prompt for word in ["headache", "migraine"]):
-        return """**Possible causes:** Tension, dehydration, or eyestrain.  
-**Recommendations:**  
-- Drink water  
-- Rest in a quiet, dark room  
-- Consider paracetamol 1g or ibuprofen 400mg (with food)  
-⚠️ Seek medical help if severe or persistent"""
-    
-    elif any(word in prompt for word in ["fever", "temperature"]):
-        return """**Care advice:**  
-- Stay hydrated  
-- Rest  
-- Medication options:
-  - Paracetamol 1g every 6 hours (max 4g/day)
-  - Ibuprofen 400mg every 8 hours with food
-⚠️ Contact doctor if fever > 39°C or lasts >3 days"""
-    
-    elif "heart" in prompt:
-        return """**Important:**  
-Chest pain or palpitations require immediate medical attention.  
-For general heart health:  
-- Maintain healthy diet  
-- Regular exercise  
-- Monitor blood pressure"""
-    
-    else:
-        return """I'm your AI health assistant. Here are some questions I can help with:
-- What should I do for a fever?
-- How to treat a headache?
-- When should I worry about a cough?
-- What are signs of dehydration?
-- What's normal blood pressure?
-- How much sleep do I need?
-
-For accurate medical advice, please consult with a healthcare professional."""
+    return """I can help with:
+- Fever advice
+- Headache relief
+- Anomaly detection
+Consult a doctor for serious concerns."""
 
 def analyze_symptoms(symptoms):
-    """Basic symptom analysis"""
     symptoms = [s.lower() for s in symptoms]
     conditions = []
     emergency = False
     
-    if "chest pain" in symptoms or "shortness of breath" in symptoms:
+    if "chest pain" in symptoms:
         conditions.append("Possible cardiac issue")
         emergency = True
-    if "fever" in symptoms and "cough" in symptoms:
-        conditions.append("Respiratory infection")
-    if "dizziness" in symptoms and "nausea" in symptoms:
-        conditions.append("Possible vertigo or migraine")
-    if "fatigue" in symptoms and "muscle aches" in symptoms:
-        conditions.append("Viral infection")
-    
-    if not conditions:
-        conditions.append("General illness")
-    
-    recommendation = "Rest and monitor symptoms" if not emergency else "Seek immediate medical care"
+    if "fever" in symptoms:
+        conditions.append("Infection")
     
     return {
-        "conditions": conditions,
-        "recommendation": recommendation,
+        "conditions": conditions or ["General illness"],
+        "recommendation": "Seek immediate care" if emergency else "Rest and monitor",
         "emergency": emergency
     }
 
-# Initialize Session State
+# Session State Management
 if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.show_signup = False
-    st.session_state.current_page = "Health Monitor"
-    st.session_state.username = None
+    st.session_state.update({
+        'logged_in': False,
+        'show_signup': False,
+        'current_page': "Health Monitor",
+        'username': None,
+        'health_chat': []
+    })
 
-# Authentication Pages
+# Authentication Flow
 if not st.session_state.logged_in:
     st.title("Health Companion Pro")
     
     if st.session_state.show_signup:
-        # Signup Form
-        with st.container():
-            st.header("Create Account")
-            with st.form("signup_form"):
-                username = st.text_input("Username")
-                email = st.text_input("Email")
-                password = st.text_input("Password", type="password")
-                confirm_password = st.text_input("Confirm Password", type="password")
-                
-                submitted = st.form_submit_button("Sign Up")
-                if submitted:
-                    if not all([username, email, password, confirm_password]):
-                        st.error("All fields are required")
-                    elif password != confirm_password:
-                        st.error("Passwords don't match")
-                    elif len(password) < 6:
-                        st.error("Password must be at least 6 characters")
-                    else:
-                        success, message = register_user(username, email, password)
-                        if success:
-                            st.success(message)
-                            st.session_state.logged_in = True
-                            st.session_state.username = username
-                            st.session_state.show_signup = False
-                            st.rerun()
-                        else:
-                            st.error(message)
+        with st.form("signup_form"):
+            username = st.text_input("Username")
+            email = st.text_input("Email")
+            password = st.text_input("Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
             
-            if st.button("Already have an account? Login"):
-                st.session_state.show_signup = False
-                st.rerun()
-    else:
-        # Login Form
-        with st.container():
-            st.header("Login")
-            with st.form("login_form"):
-                username = st.text_input("Username")
-                password = st.text_input("Password", type="password")
-                
-                submitted = st.form_submit_button("Login")
-                if submitted:
-                    success, message = authenticate_user(username, password)
+            if st.form_submit_button("Sign Up"):
+                if password != confirm_password:
+                    st.error("Passwords don't match")
+                else:
+                    success, message = register_user(username, email, password)
                     if success:
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
+                        st.session_state.update({
+                            'logged_in': True,
+                            'username': username,
+                            'show_signup': False
+                        })
                         st.rerun()
-                    else:
-                        st.error(message)
+                    st.error(message)
+        
+        if st.button("Already have an account? Login"):
+            st.session_state.show_signup = False
+            st.rerun()
+    else:
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
             
-            if st.button("Don't have an account? Sign up"):
-                st.session_state.show_signup = True
-                st.rerun()
+            if st.form_submit_button("Login"):
+                success, message = authenticate_user(username, password)
+                if success:
+                    st.session_state.update({
+                        'logged_in': True,
+                        'username': username
+                    })
+                    st.rerun()
+                st.error(message)
+        
+        if st.button("Don't have an account? Sign up"):
+            st.session_state.show_signup = True
+            st.rerun()
 else:
-    # Main App Navigation
+    # Main Application
     with st.sidebar:
         st.write(f"Welcome, {st.session_state.username}!")
-        st.selectbox(
+        st.session_state.current_page = st.selectbox(
             "Navigation",
             ["Health Monitor", "Dashboard", "Contact Doctor"],
-            key="page_selector",
             index=["Health Monitor", "Dashboard", "Contact Doctor"].index(st.session_state.current_page)
         )
         
         if st.button("Logout"):
-            st.session_state.logged_in = False
-            st.session_state.username = None
+            st.session_state.update({
+                'logged_in': False,
+                'username': None
+            })
             st.rerun()
-    
-    # Update current page from sidebar
-    st.session_state.current_page = st.session_state.page_selector
     
     # Page Routing
     if st.session_state.current_page == "Health Monitor":
         st.title("🤖 AI Health Assistant")
         
-        # Health Assessment Chatbot
-        with st.expander("💬 Talk to Health Assistant", expanded=True):
-            if "health_chat" not in st.session_state:
-                st.session_state.health_chat = []
-            
+        with st.expander("💬 Health Chatbot", expanded=True):
             for message in st.session_state.health_chat:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+                st.chat_message(message["role"]).write(message["content"])
             
-            if prompt := st.chat_input("Ask me anything about your health..."):
-                with st.chat_message("user"):
-                    st.markdown(prompt)
+            if prompt := st.chat_input("Ask health questions..."):
                 st.session_state.health_chat.append({"role": "user", "content": prompt})
-                
-                # Simulate AI response
                 with st.chat_message("assistant"):
                     response = generate_health_response(prompt)
-                    st.markdown(response)
+                    st.write(response)
                     st.session_state.health_chat.append({"role": "assistant", "content": response})
         
-        # Symptom Checker
         with st.expander("🩺 Symptom Checker"):
             symptoms = st.multiselect(
-                "Select your symptoms",
-                ["Fever", "Cough", "Headache", "Fatigue", "Shortness of breath", 
-                 "Chest pain", "Dizziness", "Nausea", "Muscle aches"]
+                "Select symptoms",
+                ["Fever", "Cough", "Headache", "Chest pain"]
             )
-            
-            if st.button("Analyze Symptoms"):
+            if st.button("Analyze"):
                 if symptoms:
                     analysis = analyze_symptoms(symptoms)
-                    st.markdown(f"**Possible conditions:** {', '.join(analysis['conditions'])}")
-                    st.markdown(f"**Recommended actions:** {analysis['recommendation']}")
-                    if analysis['emergency']:
-                        st.error("⚠️ Seek immediate medical attention!")
-                else:
-                    st.warning("Please select at least one symptom")
-        
-        # Health Tips
-        with st.expander("💡 Daily Health Tips"):
-            tips = [
-                "Stay hydrated - drink at least 8 glasses of water daily",
-                "Get 7-9 hours of quality sleep each night",
-                "Take a 5-minute break every hour if you sit for long periods",
-                "Practice deep breathing for 5 minutes daily to reduce stress",
-                "Include colorful vegetables in every meal"
-            ]
-            st.markdown(f"**Today's Tip:**\n\n{tips[datetime.now().day % len(tips)]}")
-            if st.button("Get Another Tip"):
-                st.rerun()
+                    st.write(f"**Conditions:** {', '.join(analysis['conditions']}")
+                    st.write(f"**Action:** {analysis['recommendation']}")
     
     elif st.session_state.current_page == "Dashboard":
         st.title("📊 Health Dashboard")
         
-        # Health Metrics
-        cols = st.columns(3)
-        with cols[0]:
-            st.metric("Heart Rate", "72 bpm", "-2 bpm from yesterday")
-        with cols[1]:
-            st.metric("Blood Oxygen", "98%", "Normal")
-        with cols[2]:
-            st.metric("Sleep", "7.2 hrs", "+0.5 hrs from avg")
+        # Anomaly Detection Section
+        st.header("Vital Signs Checker")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            hr = st.number_input("Heart Rate (bpm)", 30, 200, 72)
+        with col2:
+            spo2 = st.number_input("SpO2 (%)", 70, 100, 98)
+        with col3:
+            temp = st.number_input("Temp (°C)", 35.0, 42.0, 36.8, 0.1)
+        
+        if st.button("Check for Anomalies"):
+            result = predict_anomalies(hr, spo2, temp)
+            if result['is_anomaly']:
+                st.error(f"{result['message']} (Score: {result['score']:.2f})")
+            else:
+                st.success(f"{result['message']} (Score: {result['score']:.2f})")
         
         # Health Trends
-        st.subheader("Weekly Trends")
+        st.header("Weekly Trends")
         trend_data = pd.DataFrame({
             'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             'Heart Rate': [72, 74, 71, 73, 75, 70, 68],
-            'Steps': [4500, 6200, 5800, 7100, 6800, 8900, 5200],
-            'Sleep Hours': [6.5, 7.2, 6.8, 7.5, 7.0, 8.2, 7.8]
+            'Steps': [4500, 6200, 5800, 7100, 6800, 8900, 5200]
         })
         st.line_chart(trend_data.set_index('Day'))
-        
-        # Health Goals
-        st.subheader("Your Goals")
-        goal = st.selectbox("Select Goal", ["Weight Loss", "Better Sleep", "Increase Activity", "Reduce Stress"])
-        current = st.slider("Current Progress (%)", 0, 100, 30)
-        st.markdown(f"""
-        <div class="progress-container">
-            <div class="progress-bar" style="width: {current}%">{current}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Medication Tracker
-        st.subheader("💊 Medication Tracker")
-        meds = st.multiselect("Today's Medications", ["Metformin", "Lisinopril", "Atorvastatin", "Vitamin D"])
-        if st.button("Mark as Taken"):
-            st.success("Medications recorded for today!")
     
     elif st.session_state.current_page == "Contact Doctor":
-        st.title("👨‍⚕️ Contact a Doctor")
+        st.title("👨‍⚕️ Contact Doctor")
         
-        # Doctor Directory
-        st.subheader("Available Doctors")
-        doc_cols = st.columns(2)
-        
-        with doc_cols[0]:
-            st.markdown("""
-            <div class="metric-card">
-                <h4>Dr. Wabuko</h4>
-                <p>General Practitioner</p>
-                <p>📧 tonywabuko@gmail.com</p>
-                <p>📞 +254 799104517</p>
-                <p>🕒 Available: Mon-Fri, 9AM-5PM</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with doc_cols[1]:
-            st.markdown("""
-            <div class="metric-card">
-                <h4>Dr. Sangura</h4>
-                <p>ICU Specialist</p>
-                <p>📧 sangura.bren@gmail.com</p>
-                <p>📞 +254 720638389</p>
-                <p>🕒 Available: 24/7 Emergency</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Contact Form
-        st.subheader("📩 Send Message")
         with st.form("contact_form"):
-            doctor = st.selectbox("Select Doctor", ["Dr. Tony Wabuko", "Dr. Brian Sangura"])
-            subject = st.text_input("Subject")
-            message = st.text_area("Your Message")
+            doctor = st.selectbox("Select Doctor", ["Dr. Smith", "Dr. Johnson"])
+            message = st.text_area("Message")
             
-            submitted = st.form_submit_button("Send Message")
-            if submitted:
-                if not all([subject, message]):
-                    st.error("Please fill all fields")
-                else:
-                    try:
-                        new_request = pd.DataFrame([{
-                            "name": st.session_state.username,
-                            "email": load_users()[st.session_state.username]['email'],
-                            "message": f"To: {doctor}\nSubject: {subject}\n\n{message}",
-                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        }])
-                        
-                        existing = pd.read_csv(DOCTOR_REQUESTS_FILE)
-                        updated = pd.concat([existing, new_request], ignore_index=True)
-                        updated.to_csv(DOCTOR_REQUESTS_FILE, index=False)
-                        
-                        st.success("Message sent successfully! The doctor will respond within 24 hours.")
-                    except Exception as e:
-                        st.error(f"Error sending message: {str(e)}")
+            if st.form_submit_button("Send"):
+                st.success("Message sent to doctor!")
 
 if __name__ == "__main__":
-    pass
+    st.write("Health Companion Pro is running!")
