@@ -12,9 +12,9 @@ from model import predict_anomalies
 USER_DB_FILE = "users.json"
 DOCTOR_REQUESTS_FILE = "doctor_requests.csv"
 NORMAL_RANGES = {
-    "heart_rate": (60, 100),
-    "spO2": (95, 100),
-    "temperature": (36.2, 37.2)
+    "heart_rate": (60, 100),  # Normal resting heart rate for adults
+    "spO2": (95, 100),       # Normal oxygen saturation
+    "temperature": (36.1, 37.2)  # Normal body temperature range
 }
 
 # Initialize data files
@@ -560,20 +560,39 @@ else:
             temp = st.number_input("Temp (°C)", 35.0, 42.0, 36.8, 0.1)
         
         if st.button("Check for Anomalies", type="primary"):
+            # First check against normal ranges
+            hr_anomaly = hr < NORMAL_RANGES["heart_rate"][0] or hr > NORMAL_RANGES["heart_rate"][1]
+            spo2_anomaly = spo2 < NORMAL_RANGES["spO2"][0]
+            temp_anomaly = temp < NORMAL_RANGES["temperature"][0] or temp > NORMAL_RANGES["temperature"][1]
+            
+            # Then get the model prediction
             result = predict_anomalies(hr, spo2, temp)
             
-            if result['is_anomaly']:
+            # Combine simple range checks with model prediction
+            if hr_anomaly or spo2_anomaly or temp_anomaly or result['is_anomaly']:
+                anomaly_messages = []
+                if hr_anomaly:
+                    anomaly_messages.append(f"Abnormal heart rate ({hr} bpm, normal: 60-100)")
+                if spo2_anomaly:
+                    anomaly_messages.append(f"Low oxygen saturation ({spo2}%, normal: ≥95%)")
+                if temp_anomaly:
+                    anomaly_messages.append(f"Abnormal temperature ({temp}°C, normal: 36.1-37.2)")
+                
+                combined_message = result['message']
+                if anomaly_messages:
+                    combined_message += "\n\nAdditional concerns:\n- " + "\n- ".join(anomaly_messages)
+                
                 st.markdown(f"""
                 <div class="anomaly-alert">
                     <h4 style='color: #ff8080; margin-top: 0;'>⚠️ Anomaly Detected</h4>
-                    <p style='font-size: 1.1rem;'>{result['message']}</p>
+                    <p style='font-size: 1.1rem;'>{combined_message}</p>
                     <p><b>Anomaly Score:</b> {result['score']:.2f}</p>
                     <div style='margin-top: 1rem;'>
                         <h5 style='color: #ff8080;'>🔍 Details:</h5>
                         <ul>
                             <li><b>Heart Rate:</b> {hr} bpm (Normal: 60-100)</li>
-                            <li><b>SpO2:</b> {spo2}% (Normal: 95-100)</li>
-                            <li><b>Temperature:</b> {temp}°C (Normal: 36.2-37.2)</li>
+                            <li><b>SpO2:</b> {spo2}% (Normal: ≥95)</li>
+                            <li><b>Temperature:</b> {temp}°C (Normal: 36.1-37.2)</li>
                         </ul>
                     </div>
                     <p style='color: #ff8080; font-weight: bold;'>
@@ -590,9 +609,9 @@ else:
                     <div style='margin-top: 1rem;'>
                         <h5 style='color: #80ff80;'>Your Readings:</h5>
                         <ul>
-                            <li><b>Heart Rate:</b> {hr} bpm</li>
-                            <li><b>SpO2:</b> {spo2}%</li>
-                            <li><b>Temperature:</b> {temp}°C</li>
+                            <li><b>Heart Rate:</b> {hr} bpm (Normal: 60-100)</li>
+                            <li><b>SpO2:</b> {spo2}% (Normal: ≥95)</li>
+                            <li><b>Temperature:</b> {temp}°C (Normal: 36.1-37.2)</li>
                         </ul>
                     </div>
                 </div>
